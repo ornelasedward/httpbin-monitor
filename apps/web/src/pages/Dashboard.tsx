@@ -1,39 +1,12 @@
-import { useMemo } from 'react';
-import type { ResponseRecord } from '@httpbin-monitor/shared';
-import { ChatPanel } from '@/components/ChatPanel';
 import { ResponsesTable } from '@/components/ResponsesTable';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { flattenPages, useResponses } from '@/hooks/useResponses';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useHealth } from '@/hooks/useHealth';
-
-const ONE_HOUR_MS = 60 * 60 * 1000;
-
-function isSuccess(statusCode: number): boolean {
-  return statusCode >= 200 && statusCode < 300;
-}
-
-function computeStats(rows: ResponseRecord[]) {
-  const now = Date.now();
-  const lastHour = rows.filter((row) => now - new Date(row.timestamp).getTime() <= ONE_HOUR_MS);
-  const total = lastHour.length;
-  const successes = lastHour.filter((row) => isSuccess(row.statusCode));
-  const avgResponseTime =
-    successes.length > 0
-      ? Math.round(
-          successes.reduce((sum, row) => sum + row.responseTimeMs, 0) / successes.length,
-        )
-      : 0;
-  const errorRate = total > 0 ? ((total - successes.length) / total) * 100 : 0;
-
-  return { total, avgResponseTime, errorRate };
-}
 
 export function Dashboard() {
   const { data: healthy, isLoading: healthLoading, isError: healthError } = useHealth();
-  const { data } = useResponses();
-
-  const stats = useMemo(() => computeStats(flattenPages(data)), [data]);
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
 
   const healthBadge =
     healthLoading ? (
@@ -44,10 +17,14 @@ export function Dashboard() {
       <Badge variant="success">API: healthy</Badge>
     );
 
+  const total = stats?.total ?? 0;
+  const avgResponseTime = stats?.avgResponseTime ?? 0;
+  const errorRate = stats?.errorRate ?? 0;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">HTTP Monitor</h1>
+        <h1 className="font-display text-3xl font-semibold">Dashboard</h1>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">API status</span>
           {healthBadge}
@@ -55,38 +32,43 @@ export function Dashboard() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
+        <Card className="border-t-2 border-t-primary/40">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total pings (last hour)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold">{stats.total}</p>
+            <p className="font-display text-2xl font-semibold">
+              {statsLoading ? '…' : total}
+            </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-t-2 border-t-primary/25">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Avg response time
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold">{stats.avgResponseTime}ms</p>
+            <p className="font-display text-2xl font-semibold">
+              {statsLoading ? '…' : `${avgResponseTime}ms`}
+            </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-t-2 border-t-destructive/35">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Error rate</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold">{stats.errorRate.toFixed(1)}%</p>
+            <p className="font-display text-2xl font-semibold">
+              {statsLoading ? '…' : `${errorRate.toFixed(1)}%`}
+            </p>
           </CardContent>
         </Card>
       </div>
 
       <ResponsesTable />
-      <ChatPanel />
     </div>
   );
 }

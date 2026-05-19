@@ -3,9 +3,9 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { InfiniteData } from '@tanstack/react-query';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import type { ResponseRecord } from '@httpbin-monitor/shared';
+import type { Incident, ResponseRecord } from '@httpbin-monitor/shared';
 import { ResponsesTable } from './ResponsesTable';
-import type { ResponsesPage } from '@/lib/api';
+import type { IncidentsPage, ResponsesPage } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
 
 vi.mock('@/hooks/useResponses', async () => {
@@ -16,6 +16,15 @@ vi.mock('@/hooks/useResponses', async () => {
   };
 });
 
+vi.mock('@/hooks/useIncidents', async () => {
+  const actual = await vi.importActual<typeof import('@/hooks/useIncidents')>('@/hooks/useIncidents');
+  return {
+    ...actual,
+    useIncidents: vi.fn(),
+  };
+});
+
+import { useIncidents } from '@/hooks/useIncidents';
 import { useResponses } from '@/hooks/useResponses';
 
 function makeRecord(overrides: Partial<ResponseRecord> = {}): ResponseRecord {
@@ -57,7 +66,43 @@ function renderWithClient(initialData?: InfiniteData<ResponsesPage>) {
   };
 }
 
+function makeIncident(overrides: Partial<Incident> = {}): Incident {
+  return {
+    id: 'inc-1',
+    responseId: 'rec-1',
+    severity: 'high',
+    summary: 'Slow response detected',
+    rootCauses: {
+      rootCauses: ['Upstream latency'],
+      recommendations: ['Increase timeout'],
+    },
+    createdAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+function makeIncidentsInfiniteData(items: Incident[]): InfiniteData<IncidentsPage> {
+  return {
+    pages: [{ items, nextCursor: null }],
+    pageParams: [undefined],
+  };
+}
+
 const mockedUseResponses = vi.mocked(useResponses);
+const mockedUseIncidents = vi.mocked(useIncidents);
+
+function mockUseIncidentsResult(data: InfiniteData<IncidentsPage>): ReturnType<typeof useIncidents> {
+  return {
+    data,
+    isLoading: false,
+    isError: false,
+    error: null,
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isFetchingNextPage: false,
+    refetch: vi.fn(),
+  } as unknown as ReturnType<typeof useIncidents>;
+}
 
 function mockUseResponsesResult(
   data: InfiniteData<ResponsesPage>,
@@ -77,6 +122,7 @@ function mockUseResponsesResult(
 describe('ResponsesTable', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedUseIncidents.mockReturnValue(mockUseIncidentsResult(makeIncidentsInfiniteData([])));
   });
 
   it('renders rows from query data with correct columns', () => {
@@ -106,12 +152,20 @@ describe('ResponsesTable', () => {
 
     renderWithClient();
 
-    expect(screen.getByText('200').closest('[data-status-code="200"]')).toHaveClass('bg-green-100');
-    expect(screen.getByText('404').closest('[data-status-code="404"]')).toHaveClass('bg-amber-100');
-    expect(screen.getByText('503').closest('[data-status-code="503"]')).toHaveClass('bg-red-100');
-    expect(screen.getByText('Network error').closest('[data-status-code="0"]')).toHaveClass(
-      'bg-gray-100',
+    expect(screen.getByText('200').closest('[data-status-code="200"]')).toHaveClass(
+      'bg-status-success',
     );
+    expect(screen.getByText('404').closest('[data-status-code="404"]')).toHaveClass(
+      'bg-status-warn',
+    );
+    expect(screen.getByText('503').closest('[data-status-code="503"]')).toHaveClass(
+      'bg-status-error',
+    );
+    expect(screen.getByText('Network error').closest('[data-status-code="0"]')).toHaveClass(
+      'bg-status-neutral',
+    );
+    expect(screen.getAllByRole('button', { name: 'View details' })).toHaveLength(3);
+    expect(screen.getByRole('button', { name: 'View payload' })).toBeInTheDocument();
   });
 
   it('styles response time over 3000ms in red', () => {
@@ -121,7 +175,7 @@ describe('ResponsesTable', () => {
 
     renderWithClient();
 
-    expect(screen.getByText('3500ms')).toHaveClass('text-red-600');
+    expect(screen.getByText('3500ms')).toHaveClass('text-status-error-fg');
   });
 
   it('renders empty state when there are no items', () => {
@@ -132,6 +186,25 @@ describe('ResponsesTable', () => {
     expect(
       screen.getByText(/Waiting for the first ping/i),
     ).toBeInTheDocument();
+  });
+
+  it('opens the sheet with incident details when response is linked', async () => {
+    const user = userEvent.setup();
+    mockedUseResponses.mockReturnValue(
+      mockUseResponsesResult(makeInfiniteData([makeRecord({ id: 'rec-1' })])),
+    );
+    mockedUseIncidents.mockReturnValue(
+      mockUseIncidentsResult(makeIncidentsInfiniteData([makeIncident({ responseId: 'rec-1' })])),
+    );
+
+    renderWithClient();
+
+    await user.click(screen.getByRole('button', { name: 'View details' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Slow response detected')).toBeInTheDocument();
+    expect(within(dialog).getByText('Upstream latency')).toBeInTheDocument();
+    expect(within(dialog).getByText(/"hello": "world"/)).toBeInTheDocument();
   });
 
   it('opens the sheet and shows request payload JSON', async () => {

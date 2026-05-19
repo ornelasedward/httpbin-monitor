@@ -53,15 +53,36 @@ The web client loads history with `GET /responses` (TanStack Query infinite scro
 
 ## Core component and testing strategy
 
-The PDF asks for one core component tested thoroughly. **This submission spotlights the ping worker** (`apps/api/src/ping-worker.ts`).
+The take-home asks you to identify core parts, write **comprehensive tests for one** of them, and cover the rest with supporting tests across unit, integration, and basic user-flow categories. This repo maps to that structure as follows.
 
-It owns the business logic that matters: faker payload generation, the httpbin POST, timing, error classification, persistence, and broadcast. It sits upstream of the dashboard, the REST API, and the AI tools — if the worker lies about status or timing, every downstream view is wrong. It also talks to a dependency we do not control; resilience and test doubles matter.
+### Core component (comprehensive)
 
-The worker is a factory (`createPingWorker(deps)`). Axios, Prisma, and Socket.IO never import at module scope — every dependency arrives through `PingWorkerDeps`. Tests mock with `vi.fn()` only: no nock, no Docker, no flakiness. The suite (`apps/api/src/ping-worker.test.ts`, 10 tests) covers happy-path 200, 4xx, 5xx, timeout (`ECONNABORTED`), network error, DB failure (returns null, no broadcast), broadcaster failure (still returns persisted row), single `payloadGenerator` call per run, `responseTimeMs` from injected `now()`, and two sequential runs with distinct payloads.
+**Ping worker** (`apps/api/src/ping-worker.ts`) — **10 tests** in `ping-worker.test.ts`.
 
-The **never throws** guarantee is deliberate. Any httpbin blip becomes a persisted failure row with `statusCode: 0` and an `errorMessage`, and the scheduler keeps firing. If `run()` threw, one bad network day would kill the cron loop.
+It owns payload generation, the httpbin POST, timing, error classification, persistence, and Socket.IO broadcast. Everything downstream (dashboard table, `GET /stats`, AI `query_responses`, incident monitor) assumes these rows are correct.
 
-Supporting coverage: routes (cursor pagination), scheduler (timer survives worker errors), AI cache (deterministic hash, fingerprint separation), AI limiter (sliding window), AI acquire (token budget + shared rate limit), AI tools (enum validation as the SQL-injection guard). **36 API tests and 18 web tests (54 total)**; CI runs lint, typecheck, tests with coverage artifacts, on every push.
+The worker is a factory (`createPingWorker(deps)`). Dependencies are injected; tests use `vi.fn()` only (no nock, no Docker). Coverage includes: happy 200, 4xx, 5xx, timeout (`ECONNABORTED`), network error, DB failure (null, no broadcast), broadcaster failure (row still returned), one payload per run, `responseTimeMs` from `now()`, and two sequential runs with distinct payloads.
+
+The **never throws** rule is intentional: failures become persisted rows with `statusCode: 0` so the scheduler keeps running.
+
+### Supporting tests (by PDF category)
+
+| Category | What we test | Location |
+|----------|----------------|----------|
+| **Unit — business logic** | Dashboard stat aggregation; incident detail parsing; AI cache fingerprint; limiter window; LLM acquire; tool enum guard | `dashboard-stats.test.ts`, `incidents.test.ts`, `ai/*.test.ts` |
+| **Integration — API** | `GET /health`, `GET /stats`, `GET /responses` (+ cursor), `GET /responses/:id`, `GET /incidents`, `GET /ai/usage`, chat validation; HTTP errors via `errorHandler` | `routes.test.ts`, `health.test.ts`, `error-handler.test.ts` |
+| **Unit — scheduler** | Timer survives worker rejection | `scheduler.test.ts` |
+| **Basic user flows (web)** | Dashboard stat cards + health; responses table columns, badges, payload sheet, incident cross-link; incidents table + fetched response; live socket cache + stats invalidation; API client | `Dashboard.test.tsx`, `ResponsesTable.test.tsx`, `IncidentsTable.test.tsx`, `useSocket.test.tsx`, `api.test.ts`, `App.test.tsx` |
+
+**Totals:** **48 API tests** and **34 web tests** (**82 total**). Run `pnpm test` locally; `pnpm test:coverage` writes reports under `apps/api/coverage` and `apps/web/coverage`.
+
+### CI pipeline
+
+GitHub Actions (`.github/workflows/ci.yml`) on every push/PR to `main`:
+
+1. **Lint** — ESLint (`pnpm lint`) and Prettier (`pnpm format:check`)
+2. **Typecheck** — `tsc --noEmit` for API and web
+3. **Test + coverage** — full suite with Postgres service for Prisma; coverage uploaded as a workflow artifact
 
 ## AI enhancement — Option B
 
@@ -199,16 +220,15 @@ model Incident {
 ## Testing
 
 ```bash
-pnpm test
-pnpm test:coverage          # writes coverage/ under apps/api and apps/web
+pnpm test                   # 82 tests (api + web)
+pnpm test:coverage          # coverage/ under apps/api and apps/web
 pnpm --filter api test
 pnpm --filter web test
-pnpm --filter api exec tsc --noEmit
-pnpm --filter web exec tsc --noEmit
 pnpm lint
+pnpm format:check
 ```
 
-GitHub Actions (`.github/workflows/ci.yml`) runs lint, `tsc --noEmit`, tests with **coverage** (uploaded as a workflow artifact), and Postgres-backed API tests on every push.
+See [Core component and testing strategy](#core-component-and-testing-strategy) for how tests map to the take-home requirements.
 
 ## Assumptions
 
@@ -222,7 +242,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs lint, `tsc --noEmit`, tests wit
 
 - Persist rate-limit and cache keys in Redis so restarts and second instances behave consistently.
 - Extract scheduler + incident monitor into a worker service so API replicas stay stateless.
-- Add `GET /stats/rolling` (or similar) so the dashboard does not aggregate client-side forever.
+- Add rolling time-series endpoints for anomaly charts (Option A territory).
 - Propagate a trace id from worker → DB → WebSocket → UI so an incident card deep-links to the exact row.
 - Optional pgvector on `responseBody.json` for semantic “find similar requests” (Option C territory).
 

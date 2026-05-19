@@ -1,15 +1,10 @@
-import {
-  forwardRef,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-  type RefObject,
-} from 'react';
-import type { ResponseRecord } from '@httpbin-monitor/shared';
+import { forwardRef, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import type { Incident } from '@httpbin-monitor/shared';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { IncidentDetailsSection, severityClass } from '@/components/IncidentDetailsSection';
+import { JsonBlock } from '@/components/JsonBlock';
 import {
   Sheet,
   SheetContent,
@@ -25,19 +20,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { IncidentDetailsSection } from '@/components/IncidentDetailsSection';
-import { JsonBlock } from '@/components/JsonBlock';
-import { StatusBadge } from '@/components/StatusBadge';
 import { flattenIncidentPages, useIncidents } from '@/hooks/useIncidents';
-import { flattenPages, useResponses } from '@/hooks/useResponses';
-import { findIncidentForResponse } from '@/lib/incidents';
+import { useResponse } from '@/hooks/useResponse';
 import { relativeTime } from '@/lib/relative-time';
 import { cn } from '@/lib/utils';
 
-const PING_INTERVAL_SECONDS = Number(
-  import.meta.env.VITE_PING_INTERVAL_SECONDS ?? 10,
-);
-const HTTPBIN_URL = 'httpbin.org/anything';
 const SCROLL_LOAD_THRESHOLD_PX = 120;
 
 function useScrollLoadMore(
@@ -76,7 +63,7 @@ const ScrollableTableShell = forwardRef<HTMLDivElement, { children: ReactNode }>
       <div
         ref={ref}
         className="max-h-[min(60vh,40rem)] overflow-y-auto overscroll-contain"
-        data-testid="responses-scroll-container"
+        data-testid="incidents-scroll-container"
       >
         {children}
       </div>
@@ -84,22 +71,12 @@ const ScrollableTableShell = forwardRef<HTMLDivElement, { children: ReactNode }>
   },
 );
 
-function isErrorResponse(row: ResponseRecord): boolean {
-  return row.statusCode === 0 || row.statusCode < 200 || row.statusCode >= 300;
-}
-
-function responseTimeClass(ms: number): string {
-  if (ms > 3000) return 'font-medium text-status-error-fg';
-  if (ms > 1000) return 'font-medium text-status-warn-fg';
-  return '';
-}
-
 function SkeletonRows() {
   return (
     <>
       {Array.from({ length: 5 }).map((_, index) => (
         <TableRow key={index}>
-          {Array.from({ length: 5 }).map((__, cellIndex) => (
+          {Array.from({ length: 4 }).map((__, cellIndex) => (
             <TableCell key={cellIndex}>
               <div className="h-4 animate-pulse rounded bg-muted" />
             </TableCell>
@@ -113,29 +90,27 @@ function SkeletonRows() {
 const tableHeader = (
   <TableHeader className="sticky top-0 z-10 bg-card shadow-[0_1px_0_0_hsl(var(--border))]">
     <TableRow>
-      <TableHead>Timestamp</TableHead>
-      <TableHead>Status</TableHead>
-      <TableHead>Response time</TableHead>
-      <TableHead>URL</TableHead>
+      <TableHead>Time</TableHead>
+      <TableHead>Severity</TableHead>
+      <TableHead>Summary</TableHead>
       <TableHead>Actions</TableHead>
     </TableRow>
   </TableHeader>
 );
 
-export function ResponsesTable() {
+export function IncidentsTable() {
   const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    useResponses();
-  const { data: incidentsData } = useIncidents();
-  const items = flattenPages(data);
-  const incidents = flattenIncidentPages(incidentsData);
-  const [selected, setSelected] = useState<ResponseRecord | null>(null);
+    useIncidents();
+  const incidents = flattenIncidentPages(data);
+  const [selected, setSelected] = useState<Incident | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLTableRowElement>(null);
 
-  const relatedIncident = useMemo(
-    () => (selected ? findIncidentForResponse(incidents, selected.id) : undefined),
-    [selected, incidents],
-  );
+  const {
+    data: relatedResponse,
+    isLoading: responseLoading,
+    isError: responseError,
+  } = useResponse(selected?.responseId);
 
   useScrollLoadMore(scrollRef, sentinelRef, {
     hasNextPage: hasNextPage ?? false,
@@ -165,7 +140,7 @@ export function ResponsesTable() {
       <Card className="border-status-error/40 bg-status-error/30">
         <CardContent className="space-y-3 p-6">
           <p className="text-sm text-status-error-fg">
-            {error instanceof Error ? error.message : 'Failed to load responses'}
+            {error instanceof Error ? error.message : 'Failed to load incidents'}
           </p>
           <Button type="button" variant="outline" onClick={() => void refetch()}>
             Retry
@@ -175,11 +150,12 @@ export function ResponsesTable() {
     );
   }
 
-  if (items.length === 0) {
+  if (incidents.length === 0) {
     return (
       <Card>
         <CardContent className="p-6 text-sm text-muted-foreground">
-          Waiting for the first ping... (interval: {PING_INTERVAL_SECONDS} seconds)
+          No incidents yet. Slow responses above 2× the rolling average will appear here
+          automatically.
         </CardContent>
       </Card>
     );
@@ -193,28 +169,27 @@ export function ResponsesTable() {
             <Table>
               {tableHeader}
               <TableBody>
-                {items.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell>{relativeTime(row.timestamp)}</TableCell>
+                {incidents.map((incident) => (
+                  <TableRow key={incident.id}>
+                    <TableCell className="whitespace-nowrap">
+                      {relativeTime(incident.createdAt)}
+                    </TableCell>
                     <TableCell>
-                      <StatusBadge statusCode={row.statusCode} />
+                      <Badge className={cn(severityClass(incident.severity))}>
+                        {incident.severity}
+                      </Badge>
                     </TableCell>
-                    <TableCell className={cn(responseTimeClass(row.responseTimeMs))}>
-                      {row.responseTimeMs}ms
-                    </TableCell>
-                    <TableCell className="max-w-[12rem] truncate text-muted-foreground">
-                      {HTTPBIN_URL}
+                    <TableCell className="max-w-md truncate" title={incident.summary}>
+                      {incident.summary}
                     </TableCell>
                     <TableCell>
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
-                        onClick={() => setSelected(row)}
+                        onClick={() => setSelected(incident)}
                       >
-                        {findIncidentForResponse(incidents, row.id) || isErrorResponse(row)
-                          ? 'View details'
-                          : 'View payload'}
+                        View details
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -222,7 +197,7 @@ export function ResponsesTable() {
                 {isFetchingNextPage ? (
                   <TableRow>
                     <TableCell
-                      colSpan={5}
+                      colSpan={4}
                       className="py-3 text-center text-sm text-muted-foreground"
                     >
                       Loading more…
@@ -231,7 +206,7 @@ export function ResponsesTable() {
                 ) : null}
                 {hasNextPage ? (
                   <TableRow ref={sentinelRef} aria-hidden className="h-0 border-0 hover:bg-transparent">
-                    <TableCell colSpan={5} className="h-px p-0" />
+                    <TableCell colSpan={4} className="h-px p-0" />
                   </TableRow>
                 ) : null}
               </TableBody>
@@ -243,19 +218,25 @@ export function ResponsesTable() {
       <Sheet open={selected !== null} onOpenChange={(open) => !open && setSelected(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
           <SheetHeader>
-            <SheetTitle>
-              {relatedIncident ? 'Response & incident details' : 'Payload details'}
-            </SheetTitle>
+            <SheetTitle>Incident details</SheetTitle>
             <SheetDescription>
-              Request and response JSON for this ping
-              {relatedIncident ? ', plus linked incident analysis' : ''}.
+              AI-generated summary, root causes, and the related httpbin response.
             </SheetDescription>
           </SheetHeader>
           {selected ? (
             <div className="mt-4 space-y-4">
-              {relatedIncident ? <IncidentDetailsSection incident={relatedIncident} /> : null}
-              <JsonBlock title="Request payload" value={selected.requestPayload} />
-              <JsonBlock title="Response body" value={selected.responseBody} />
+              <IncidentDetailsSection incident={selected} showHeading={false} />
+
+              {responseLoading ? (
+                <p className="text-sm text-muted-foreground">Loading response…</p>
+              ) : responseError ? (
+                <p className="text-sm text-status-error-fg">Failed to load related response.</p>
+              ) : relatedResponse ? (
+                <>
+                  <JsonBlock title="Request payload" value={relatedResponse.requestPayload} />
+                  <JsonBlock title="Response body" value={relatedResponse.responseBody} />
+                </>
+              ) : null}
             </div>
           ) : null}
         </SheetContent>

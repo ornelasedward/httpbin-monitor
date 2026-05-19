@@ -12,6 +12,12 @@ export type IncidentsPage = {
   nextCursor: string | null;
 };
 
+export type DashboardStats = {
+  total: number;
+  avgResponseTime: number;
+  errorRate: number;
+};
+
 export type AiUsage = {
   used: number;
   max: number;
@@ -43,6 +49,29 @@ export async function fetchResponses(opts: {
   }
 
   return res.json() as Promise<ResponsesPage>;
+}
+
+export async function fetchDashboardStats(): Promise<DashboardStats> {
+  const res = await fetch(`${API_URL}/stats`);
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch stats: HTTP ${res.status}`);
+  }
+
+  return res.json() as Promise<DashboardStats>;
+}
+
+export async function fetchResponse(id: string): Promise<ResponseRecord> {
+  const res = await fetch(`${API_URL}/responses/${id}`);
+
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error('Response not found');
+    }
+    throw new Error(`Failed to fetch response: HTTP ${res.status}`);
+  }
+
+  return res.json() as Promise<ResponseRecord>;
 }
 
 export async function fetchIncidents(opts: {

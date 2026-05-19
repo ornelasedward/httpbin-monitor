@@ -7,7 +7,8 @@ import type { AIServices } from './ai/services.js';
 import { estimateCostUsd, HAIKU_INPUT_USD_PER_M, HAIKU_OUTPUT_USD_PER_M } from './ai/services.js';
 import { handleChatStream } from './ai/chat.js';
 import { initSse, writeSse } from './ai/sse.js';
-import { asyncHandler } from './error-handler.js';
+import { asyncHandler, HttpError } from './error-handler.js';
+import { computeDashboardStats, ONE_HOUR_MS } from './dashboard-stats.js';
 
 export type ResponsesRepository = {
   findMany: (args: {
@@ -25,6 +26,19 @@ export type ResponsesRepository = {
       errorMessage: string | null;
     }>
   >;
+  findById: (id: string) => Promise<{
+    id: string;
+    timestamp: Date;
+    statusCode: number;
+    responseTimeMs: number;
+    requestPayload: unknown;
+    responseBody: unknown;
+    errorMessage: string | null;
+  } | null>;
+};
+
+export type StatsRepository = {
+  findLastHour: () => Promise<Array<{ statusCode: number; responseTimeMs: number }>>;
 };
 
 export type IncidentsRepository = {
@@ -72,6 +86,7 @@ function parseChatMessages(raw: unknown): ChatMessage[] | null {
 export function createRoutes(deps?: {
   responsesRepo?: ResponsesRepository;
   incidentsRepo?: IncidentsRepository;
+  statsRepo?: StatsRepository;
   ai?: AIServices | null;
 }) {
   const router = Router();
@@ -83,6 +98,7 @@ export function createRoutes(deps?: {
           ...args,
           orderBy: [{ timestamp: 'desc' }, { id: 'desc' }],
         }),
+      findById: (id) => prisma.response.findUnique({ where: { id } }),
     } satisfies ResponsesRepository);
 
   const incidentsRepo =
@@ -95,11 +111,29 @@ export function createRoutes(deps?: {
         }),
     } satisfies IncidentsRepository);
 
+  const statsRepo =
+    deps?.statsRepo ??
+    ({
+      findLastHour: () =>
+        prisma.response.findMany({
+          where: { timestamp: { gte: new Date(Date.now() - ONE_HOUR_MS) } },
+          select: { statusCode: true, responseTimeMs: true },
+        }),
+    } satisfies StatsRepository);
+
   const ai = deps?.ai ?? null;
 
   router.get('/health', (_req, res) => {
     res.json({ ok: true });
   });
+
+  router.get(
+    '/stats',
+    asyncHandler(async (_req: Request, res: Response) => {
+      const rows = await statsRepo.findLastHour();
+      res.json(computeDashboardStats(rows));
+    }),
+  );
 
   router.get(
     '/responses',
@@ -118,6 +152,17 @@ export function createRoutes(deps?: {
       const nextCursor = hasMore && items.length > 0 ? items[items.length - 1]!.id : null;
 
       res.json({ items, nextCursor });
+    }),
+  );
+
+  router.get(
+    '/responses/:id',
+    asyncHandler(async (req: Request, res: Response) => {
+      const row = await responsesRepo.findById(req.params.id);
+      if (!row) {
+        throw new HttpError(404, 'Response not found');
+      }
+      res.json(toResponseRecord(row));
     }),
   );
 

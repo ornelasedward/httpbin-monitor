@@ -33,6 +33,7 @@ export function useLiveResponses(): void {
           pages: [{ ...first, items: [record, ...first.items] }, ...old.pages.slice(1)],
         };
       });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.stats.dashboard });
     };
 
     socket.on(PING_NEW, handler);

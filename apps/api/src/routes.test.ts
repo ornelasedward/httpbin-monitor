@@ -6,7 +6,12 @@ import { createAICache } from './ai/cache.js';
 import { createAILimiter } from './ai/limiter.js';
 import type { AIServices } from './ai/services.js';
 import { errorHandler } from './error-handler.js';
-import { createRoutes, type ResponsesRepository } from './routes.js';
+import {
+  createRoutes,
+  type IncidentsRepository,
+  type ResponsesRepository,
+  type StatsRepository,
+} from './routes.js';
 
 function makeRow(
   id: string,
@@ -52,6 +57,7 @@ function createInMemoryRepo(rows: Array<ReturnType<typeof makeRow>>): ResponsesR
       }
       return list.slice(0, take);
     },
+    findById: async (id) => rows.find((row) => row.id === id) ?? null,
   };
 }
 
@@ -68,16 +74,139 @@ function createMockAi(used = 0): AIServices {
   };
 }
 
+function createInMemoryIncidentsRepo(
+  rows: Array<{
+    id: string;
+    responseId: string;
+    severity: string;
+    summary: string;
+    rootCauses: unknown;
+    createdAt: Date;
+  }>,
+): IncidentsRepository {
+  const sorted = () =>
+    [...rows].sort((a, b) => {
+      const byCreated = b.createdAt.getTime() - a.createdAt.getTime();
+      if (byCreated !== 0) return byCreated;
+      return b.id.localeCompare(a.id);
+    });
+
+  return {
+    findMany: async ({ take, cursor, skip }) => {
+      let list = sorted();
+      if (cursor?.id) {
+        const index = list.findIndex((row) => row.id === cursor.id);
+        if (index >= 0) {
+          list = list.slice(index + (skip ?? 0));
+        }
+      }
+      return list.slice(0, take);
+    },
+  };
+}
+
+function createStatsRepo(rows: Array<ReturnType<typeof makeRow>>): StatsRepository {
+  const hourAgo = Date.now() - 60 * 60 * 1000;
+  return {
+    findLastHour: async () =>
+      rows
+        .filter((row) => row.timestamp.getTime() >= hourAgo)
+        .map((row) => ({ statusCode: row.statusCode, responseTimeMs: row.responseTimeMs })),
+  };
+}
+
 function createApp(
   repo: ResponsesRepository,
-  options?: { ai?: AIServices | null },
+  options?: {
+    ai?: AIServices | null;
+    statsRepo?: StatsRepository;
+    incidentsRepo?: IncidentsRepository;
+  },
 ) {
   const app = express();
   app.use(express.json());
-  app.use(createRoutes({ responsesRepo: repo, ai: options?.ai }));
+  app.use(
+    createRoutes({
+      responsesRepo: repo,
+      statsRepo: options?.statsRepo,
+      incidentsRepo: options?.incidentsRepo,
+      ai: options?.ai,
+    }),
+  );
   app.use(errorHandler);
   return app;
 }
+
+describe('GET /stats', () => {
+  it('returns zeros when there are no rows in the last hour', async () => {
+    const app = createApp(createInMemoryRepo([]), { statsRepo: createStatsRepo([]) });
+    const res = await request(app).get('/stats');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ total: 0, avgResponseTime: 0, errorRate: 0 });
+  });
+
+  it('returns aggregated stats for the last hour', async () => {
+    const hourAgo = new Date(Date.now() - 30 * 60 * 1000);
+    const rows = [
+      makeRow('row_1', hourAgo.toISOString(), { statusCode: 200, responseTimeMs: 100 }),
+      makeRow('row_2', hourAgo.toISOString(), { statusCode: 200, responseTimeMs: 300 }),
+      makeRow('row_3', hourAgo.toISOString(), { statusCode: 503, responseTimeMs: 900 }),
+    ];
+    const app = createApp(createInMemoryRepo(rows), { statsRepo: createStatsRepo(rows) });
+
+    const res = await request(app).get('/stats');
+
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(3);
+    expect(res.body.avgResponseTime).toBe(200);
+    expect(res.body.errorRate).toBeCloseTo(33.333, 2);
+  });
+
+  it('returns 500 when the stats repository fails', async () => {
+    const failingStatsRepo: StatsRepository = {
+      findLastHour: vi.fn().mockRejectedValue(new Error('stats unavailable')),
+    };
+    const app = createApp(createInMemoryRepo([]), { statsRepo: failingStatsRepo });
+    const res = await request(app).get('/stats');
+
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: 'stats unavailable' });
+  });
+});
+
+describe('GET /incidents', () => {
+  it('returns paginated incidents', async () => {
+    const rows = [
+      {
+        id: 'inc_2',
+        responseId: 'row_2',
+        severity: 'high',
+        summary: 'Slow response',
+        rootCauses: { rootCauses: ['latency'], recommendations: [] },
+        createdAt: new Date(Date.UTC(2026, 0, 2)),
+      },
+      {
+        id: 'inc_1',
+        responseId: 'row_1',
+        severity: 'low',
+        summary: 'Older incident',
+        rootCauses: { rootCauses: [], recommendations: [] },
+        createdAt: new Date(Date.UTC(2026, 0, 1)),
+      },
+    ];
+    const app = createApp(createInMemoryRepo([]), {
+      incidentsRepo: createInMemoryIncidentsRepo(rows),
+    });
+
+    const res = await request(app).get('/incidents?limit=50');
+
+    expect(res.status).toBe(200);
+    expect(res.body.items).toHaveLength(2);
+    expect(res.body.items[0].id).toBe('inc_2');
+    expect(res.body.nextCursor).toBeNull();
+  });
+});
 
 describe('GET /responses', () => {
   it('returns empty page when there are no rows', async () => {
@@ -131,10 +260,38 @@ describe('GET /responses', () => {
   });
 });
 
+describe('GET /responses/:id', () => {
+  it('returns a single response by id', async () => {
+    const row = makeRow('row_1', new Date().toISOString(), {
+      statusCode: 503,
+      responseTimeMs: 900,
+      requestPayload: { ping: true },
+      responseBody: { error: true },
+    });
+    const app = createApp(createInMemoryRepo([row]));
+
+    const res = await request(app).get('/responses/row_1');
+
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBe('row_1');
+    expect(res.body.statusCode).toBe(503);
+    expect(res.body.requestPayload).toEqual({ ping: true });
+  });
+
+  it('returns 404 when the response does not exist', async () => {
+    const app = createApp(createInMemoryRepo([]));
+    const res = await request(app).get('/responses/missing');
+
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'Response not found' });
+  });
+});
+
 describe('GET /responses errors', () => {
   it('returns 500 JSON when the repository fails', async () => {
     const failingRepo: ResponsesRepository = {
       findMany: vi.fn().mockRejectedValue(new Error('database unavailable')),
+      findById: vi.fn().mockRejectedValue(new Error('database unavailable')),
     };
     const app = createApp(failingRepo);
     const res = await request(app).get('/responses');

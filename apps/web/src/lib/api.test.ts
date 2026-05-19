@@ -2,8 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatMessage } from '@httpbin-monitor/shared';
 import {
   fetchAiUsage,
+  fetchDashboardStats,
   fetchHealth,
   fetchIncidents,
+  fetchResponse,
   fetchResponses,
   streamChat,
 } from './api.js';
@@ -84,6 +86,40 @@ describe('fetchResponses', () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({}, 500));
 
     await expect(fetchResponses({})).rejects.toThrow(/Failed to fetch responses/);
+  });
+});
+
+describe('fetchDashboardStats', () => {
+  it('returns stats from /stats', async () => {
+    const stats = { total: 151, avgResponseTime: 248, errorRate: 1.3 };
+    fetchMock.mockResolvedValueOnce(jsonResponse(stats));
+
+    await expect(fetchDashboardStats()).resolves.toEqual(stats);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/stats');
+  });
+});
+
+describe('fetchResponse', () => {
+  it('returns a single response by id', async () => {
+    const record = {
+      id: 'resp_1',
+      timestamp: '2026-05-19T12:00:00.000Z',
+      statusCode: 200,
+      responseTimeMs: 250,
+      requestPayload: { ping: true },
+      responseBody: { ok: true },
+      errorMessage: null,
+    };
+    fetchMock.mockResolvedValueOnce(jsonResponse(record));
+
+    await expect(fetchResponse('resp_1')).resolves.toEqual(record);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/responses/resp_1');
+  });
+
+  it('throws when the response is not found', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({}, 404));
+
+    await expect(fetchResponse('missing')).rejects.toThrow(/Response not found/);
   });
 });
 

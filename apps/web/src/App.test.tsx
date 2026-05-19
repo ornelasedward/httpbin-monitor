@@ -31,6 +31,28 @@ vi.mock('@/hooks/useHealth', () => ({
   }),
 }));
 
+vi.mock('@/hooks/useDashboardStats', () => ({
+  useDashboardStats: () => ({
+    data: { total: 0, avgResponseTime: 0, errorRate: 0 },
+    isLoading: false,
+    isError: false,
+  }),
+}));
+
+vi.mock('@/hooks/useAiUsage', () => ({
+  useAiUsage: () => ({
+    configured: true,
+    used: 0,
+    max: 20,
+    resetAt: null,
+    estimatedCostUsd: 0,
+  }),
+}));
+
+vi.mock('@/components/ChatPanel', () => ({
+  ChatPanel: () => null,
+}));
+
 function renderApp() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -49,6 +71,6 @@ describe('App', () => {
   it('renders dashboard navigation and monitor heading', () => {
     renderApp();
     expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'HTTP Monitor' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
   });
 });

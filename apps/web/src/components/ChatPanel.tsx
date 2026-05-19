@@ -7,11 +7,13 @@ import { Input } from '@/components/ui/input';
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { fetchAiUsage, streamChat, type AiUsage } from '@/lib/api';
+import { useAiUsage } from '@/hooks/useAiUsage';
+import { streamChat } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 const SUGGESTED_PROMPTS = [
@@ -34,22 +36,8 @@ export function ChatPanel() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
-  const [usage, setUsage] = useState<AiUsage | null>(null);
+  const usage = useAiUsage(true);
   const bottomRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const loadUsage = () => {
-      void fetchAiUsage()
-        .then(setUsage)
-        .catch(() => setUsage(null));
-    };
-
-    loadUsage();
-    const interval = setInterval(loadUsage, 30_000);
-    return () => clearInterval(interval);
-  }, [open]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -110,7 +98,6 @@ export function ChatPanel() {
       });
     } finally {
       setStreaming(false);
-      void fetchAiUsage().then(setUsage).catch(() => undefined);
     }
   };
 
@@ -118,7 +105,7 @@ export function ChatPanel() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button
-          className="fixed bottom-6 right-6 z-40 h-12 rounded-full px-5 shadow-lg"
+          className="fixed bottom-6 right-6 z-40 h-12 rounded-full px-5 shadow-warm-lg"
           type="button"
         >
           Ask AI
@@ -126,7 +113,10 @@ export function ChatPanel() {
       </SheetTrigger>
       <SheetContent className="flex w-full flex-col sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle>Monitoring assistant</SheetTitle>
+          <SheetTitle className="font-display text-xl">Monitoring assistant</SheetTitle>
+          <SheetDescription>
+            Ask questions about pings, latency, and errors in plain language.
+          </SheetDescription>
         </SheetHeader>
 
         <div className="mt-4 flex flex-wrap gap-2">

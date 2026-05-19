@@ -4,24 +4,36 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    /* Warm instrument-panel palette — original, not brand-matched */
+    --background: 38 32% 94%;
+    --foreground: 24 18% 14%;
+    --card: 40 45% 99%;
+    --card-foreground: 24 18% 14%;
+    --primary: 22 62% 42%;
+    --primary-foreground: 40 40% 98%;
+    --secondary: 35 28% 90%;
+    --secondary-foreground: 24 18% 18%;
+    --muted: 36 24% 91%;
+    --muted-foreground: 25 12% 42%;
+    --accent: 32 55% 88%;
+    --accent-foreground: 24 18% 16%;
+    --destructive: 6 58% 46%;
+    --destructive-foreground: 40 40% 98%;
+    --border: 34 18% 84%;
+    --input: 34 18% 84%;
+    --ring: 22 62% 42%;
+    --radius: 0.75rem;
+
+    --status-success-bg: 145 32% 90%;
+    --status-success-fg: 150 28% 26%;
+    --status-warn-bg: 38 55% 90%;
+    --status-warn-fg: 28 45% 28%;
+    --status-error-bg: 8 45% 92%;
+    --status-error-fg: 6 50% 32%;
+    --status-neutral-bg: 30 12% 90%;
+    --status-neutral-fg: 25 10% 32%;
+    --status-info-bg: 205 35% 90%;
+    --status-info-fg: 205 40% 28%;
   }
 
   * {
@@ -29,6 +41,12 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display tracking-tight text-foreground;
   }
 }
