@@ -13,12 +13,13 @@ import { buildPingWorkerDeps } from './build-ping-worker-deps.js';
 import { startScheduler } from './scheduler.js';
 import { createAIServices, startAIMonitors } from './ai/services.js';
 import { prisma } from './db.js';
+import { resolveFrontendOrigins } from './frontend-origins.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, '../../../.env') });
 
 const PORT = Number(process.env.PORT ?? 3001);
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5174';
+const frontendOrigins = resolveFrontendOrigins();
 const PING_INTERVAL_SECONDS = Number(process.env.PING_INTERVAL_SECONDS ?? 300);
 
 const logger = pino({
@@ -42,13 +43,13 @@ if (!process.env.ANTHROPIC_API_KEY) {
 }
 
 const app = express();
-app.use(cors({ origin: FRONTEND_ORIGIN }));
+app.use(cors({ origin: frontendOrigins }));
 app.use(express.json());
 app.use(createRoutes({ ai: aiServices }));
 app.use(errorHandler);
 
 const httpServer = createServer(app);
-const io = createSocketServer(httpServer, FRONTEND_ORIGIN);
+const io = createSocketServer(httpServer, frontendOrigins);
 
 let schedulerHandle: { stop: () => void } | undefined;
 let aiMonitorHandle: { stop: () => void } | undefined;

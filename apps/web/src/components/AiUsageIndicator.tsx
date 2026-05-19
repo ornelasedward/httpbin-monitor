@@ -4,14 +4,15 @@ export function AiUsageIndicator() {
   const usage = useAiUsage(true);
 
   if (usage === null) {
-    return (
-      <span className="hidden text-xs text-muted-foreground sm:inline">AI usage…</span>
-    );
+    return <span className="hidden text-xs text-muted-foreground sm:inline">AI usage…</span>;
   }
 
   if (!usage.configured) {
     return (
-      <span className="hidden text-xs text-muted-foreground sm:inline" title="Set ANTHROPIC_API_KEY on the API">
+      <span
+        className="hidden text-xs text-muted-foreground sm:inline"
+        title="Set ANTHROPIC_API_KEY on the API"
+      >
         AI off
       </span>
     );

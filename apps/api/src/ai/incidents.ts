@@ -1,7 +1,7 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import type { PrismaClient } from '@prisma/client';
 import type { Server } from 'socket.io';
-import { INCIDENT_NEW } from '@httpbin-monitor/shared';
+import { INCIDENT_NEW, MONITORED_ENDPOINT } from '@httpbin-monitor/shared';
 import type { AIClient } from './client.js';
 import type { AILimiter } from './limiter.js';
 import { acquireLlmCall } from './acquire-llm.js';
@@ -30,6 +30,23 @@ type IncidentPayload = {
   rootCauses: string[];
   recommendations: string[];
 };
+
+export function computeRollingAverageMs(responseTimesMs: number[]): number | null {
+  if (responseTimesMs.length === 0) return null;
+  return responseTimesMs.reduce((sum, ms) => sum + ms, 0) / responseTimesMs.length;
+}
+
+export function anomalyThresholdMs(rollingAverageMs: number, multiplier = 2): number {
+  return Math.round(rollingAverageMs * multiplier);
+}
+
+export function isAnomalousLatency(
+  responseTimeMs: number,
+  rollingAverageMs: number,
+  multiplier = 2,
+): boolean {
+  return responseTimeMs > anomalyThresholdMs(rollingAverageMs, multiplier);
+}
 
 function parseIncidentToolInput(input: unknown): IncidentPayload | null {
   if (typeof input !== 'object' || input === null) return null;
@@ -72,15 +89,15 @@ export function startIncidentMonitor(deps: {
         select: { responseTimeMs: true },
       });
 
-      if (successRows.length === 0) return;
+      const rollingAverage = computeRollingAverageMs(successRows.map((row) => row.responseTimeMs));
+      if (rollingAverage === null) return;
 
-      const rollingAverage =
-        successRows.reduce((sum, row) => sum + row.responseTimeMs, 0) / successRows.length;
+      const thresholdMs = anomalyThresholdMs(rollingAverage);
 
       const slowRows = await deps.prisma.response.findMany({
         where: {
           timestamp: { gte: fiveMinutesAgo },
-          responseTimeMs: { gt: Math.round(rollingAverage * 2) },
+          responseTimeMs: { gt: thresholdMs },
         },
         orderBy: { timestamp: 'desc' },
         take: 5,
@@ -100,6 +117,7 @@ export function startIncidentMonitor(deps: {
           {
             role: 'user',
             content: JSON.stringify({
+              endpoint: MONITORED_ENDPOINT,
               rollingAverageMs: Math.round(rollingAverage),
               response: responseRecord,
             }),
@@ -127,9 +145,7 @@ export function startIncidentMonitor(deps: {
             deps.logger.error('incident monitor: LLM call failed', err);
           }
         } else {
-          deps.logger.info(
-            `incident monitor: skipped LLM for ${row.id} (${acquired.reason})`,
-          );
+          deps.logger.info(`incident monitor: skipped LLM for ${row.id} (${acquired.reason})`);
         }
 
         const incidentData = payload ?? {

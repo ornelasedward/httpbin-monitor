@@ -125,9 +125,7 @@ function parseSseChunk(chunk: string): { event: string; payload: unknown } | nul
   }
 }
 
-export async function* streamChat(
-  messages: ChatMessage[],
-): AsyncGenerator<ChatStreamEvent> {
+export async function* streamChat(messages: ChatMessage[]): AsyncGenerator<ChatStreamEvent> {
   const res = await fetch(`${API_URL}/ai/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

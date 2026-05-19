@@ -7,7 +7,7 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
-import type { ResponseRecord } from '@httpbin-monitor/shared';
+import { MONITORED_ENDPOINT_LABEL, type ResponseRecord } from '@httpbin-monitor/shared';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -34,10 +34,7 @@ import { findIncidentForResponse } from '@/lib/incidents';
 import { relativeTime } from '@/lib/relative-time';
 import { cn } from '@/lib/utils';
 
-const PING_INTERVAL_SECONDS = Number(
-  import.meta.env.VITE_PING_INTERVAL_SECONDS ?? 10,
-);
-const HTTPBIN_URL = 'httpbin.org/anything';
+const PING_INTERVAL_SECONDS = Number(import.meta.env.VITE_PING_INTERVAL_SECONDS ?? 10);
 const SCROLL_LOAD_THRESHOLD_PX = 120;
 
 function useScrollLoadMore(
@@ -123,8 +120,16 @@ const tableHeader = (
 );
 
 export function ResponsesTable() {
-  const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    useResponses();
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = useResponses();
   const { data: incidentsData } = useIncidents();
   const items = flattenPages(data);
   const incidents = flattenIncidentPages(incidentsData);
@@ -203,7 +208,7 @@ export function ResponsesTable() {
                       {row.responseTimeMs}ms
                     </TableCell>
                     <TableCell className="max-w-[12rem] truncate text-muted-foreground">
-                      {HTTPBIN_URL}
+                      {MONITORED_ENDPOINT_LABEL}
                     </TableCell>
                     <TableCell>
                       <Button
@@ -230,7 +235,11 @@ export function ResponsesTable() {
                   </TableRow>
                 ) : null}
                 {hasNextPage ? (
-                  <TableRow ref={sentinelRef} aria-hidden className="h-0 border-0 hover:bg-transparent">
+                  <TableRow
+                    ref={sentinelRef}
+                    aria-hidden
+                    className="h-0 border-0 hover:bg-transparent"
+                  >
                     <TableCell colSpan={5} className="h-px p-0" />
                   </TableRow>
                 ) : null}

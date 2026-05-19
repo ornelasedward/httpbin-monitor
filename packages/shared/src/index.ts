@@ -1,6 +1,9 @@
 export const PING_NEW = 'ping:new' as const;
 export const INCIDENT_NEW = 'incident:new' as const;
 
+export const MONITORED_ENDPOINT = 'https://httpbin.org/anything' as const;
+export const MONITORED_ENDPOINT_LABEL = 'httpbin.org/anything' as const;
+
 export type ResponseRecord = {
   id: string;
   timestamp: string;

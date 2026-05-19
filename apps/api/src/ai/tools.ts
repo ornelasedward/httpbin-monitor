@@ -57,8 +57,7 @@ export function validateQueryResponsesInput(input: unknown): QueryResponsesInput
     throw new Error(`Invalid statusFilter: ${String(value.statusFilter)}`);
   }
 
-  const limit =
-    value.limit === undefined ? 10 : Number(value.limit);
+  const limit = value.limit === undefined ? 10 : Number(value.limit);
   if (!Number.isFinite(limit) || limit < 1 || limit > 50) {
     throw new Error('limit must be between 1 and 50');
   }
@@ -85,11 +84,7 @@ function statusWhere(statusFilter: QueryResponsesInput['statusFilter']) {
   }
   if (statusFilter === 'error') {
     return {
-      OR: [
-        { statusCode: { lt: 200 } },
-        { statusCode: { gte: 300 } },
-        { statusCode: 0 },
-      ],
+      OR: [{ statusCode: { lt: 200 } }, { statusCode: { gte: 300 } }, { statusCode: 0 }],
     };
   }
   return {};
@@ -163,11 +158,7 @@ export async function executeQueryResponses(
         prisma.response.count({
           where: {
             timestamp: { gte: since },
-            OR: [
-              { statusCode: { lt: 200 } },
-              { statusCode: { gte: 300 } },
-              { statusCode: 0 },
-            ],
+            OR: [{ statusCode: { lt: 200 } }, { statusCode: { gte: 300 } }, { statusCode: 0 }],
           },
         }),
       ]);

@@ -1,7 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { PING_NEW, type ResponseRecord } from '@httpbin-monitor/shared';
-
-const HTTPBIN_URL = 'https://httpbin.org/anything';
+import { MONITORED_ENDPOINT, PING_NEW, type ResponseRecord } from '@httpbin-monitor/shared';
 const HTTP_TIMEOUT_MS = 10_000;
 
 export interface PingWorkerDeps {
@@ -100,7 +98,7 @@ export function createPingWorker(deps: PingWorkerDeps) {
       }
 
       try {
-        const response = await deps.httpClient.post(HTTPBIN_URL, requestPayload, {
+        const response = await deps.httpClient.post(MONITORED_ENDPOINT, requestPayload, {
           timeout: HTTP_TIMEOUT_MS,
         });
         const responseTimeMs = deps.now() - startedAt;

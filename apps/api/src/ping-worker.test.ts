@@ -252,7 +252,9 @@ describe('createPingWorker', () => {
           create: vi
             .fn()
             .mockResolvedValueOnce(makeRecord({ id: 'rec_a', requestPayload: { id: 'payload-a' } }))
-            .mockResolvedValueOnce(makeRecord({ id: 'rec_b', requestPayload: { id: 'payload-b' } })),
+            .mockResolvedValueOnce(
+              makeRecord({ id: 'rec_b', requestPayload: { id: 'payload-b' } }),
+            ),
         },
       },
     });

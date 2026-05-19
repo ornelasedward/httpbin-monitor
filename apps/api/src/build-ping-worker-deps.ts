@@ -6,10 +6,7 @@ import { defaultPayloadGenerator } from './ping-worker.js';
 import { prisma } from './db.js';
 import { toResponseRecord } from './response-mapper.js';
 
-export function buildPingWorkerDeps(
-  io: Server,
-  logger: PingWorkerDeps['logger'],
-): PingWorkerDeps {
+export function buildPingWorkerDeps(io: Server, logger: PingWorkerDeps['logger']): PingWorkerDeps {
   return {
     httpClient: {
       post: async (url, body, opts) => {

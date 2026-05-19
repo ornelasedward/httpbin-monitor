@@ -99,8 +99,16 @@ const tableHeader = (
 );
 
 export function IncidentsTable() {
-  const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    useIncidents();
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = useIncidents();
   const incidents = flattenIncidentPages(data);
   const [selected, setSelected] = useState<Incident | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -205,7 +213,11 @@ export function IncidentsTable() {
                   </TableRow>
                 ) : null}
                 {hasNextPage ? (
-                  <TableRow ref={sentinelRef} aria-hidden className="h-0 border-0 hover:bg-transparent">
+                  <TableRow
+                    ref={sentinelRef}
+                    aria-hidden
+                    className="h-0 border-0 hover:bg-transparent"
+                  >
                     <TableCell colSpan={4} className="h-px p-0" />
                   </TableRow>
                 ) : null}

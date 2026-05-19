@@ -1,13 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import { executeQueryResponses, validateQueryResponsesInput } from './tools.js';
 
-function createMockPrisma(rows: Array<{
-  id: string;
-  timestamp: Date;
-  statusCode: number;
-  responseTimeMs: number;
-  errorMessage?: string | null;
-}>) {
+function createMockPrisma(
+  rows: Array<{
+    id: string;
+    timestamp: Date;
+    statusCode: number;
+    responseTimeMs: number;
+    errorMessage?: string | null;
+  }>,
+) {
   return {
     response: {
       count: vi.fn(async ({ where }: { where?: Record<string, unknown> }) => {
@@ -37,9 +39,7 @@ function createMockPrisma(rows: Array<{
           if (orderBy && typeof orderBy === 'object' && 'responseTimeMs' in (orderBy as object)) {
             filtered = [...filtered].sort((a, b) => b.responseTimeMs - a.responseTimeMs);
           } else {
-            filtered = [...filtered].sort(
-              (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
-            );
+            filtered = [...filtered].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
           }
           const sliced = filtered.slice(0, take ?? filtered.length);
           if (!select) return sliced;
@@ -64,10 +64,7 @@ function matchesWhere(
   const timestampWhere = where.timestamp as { gte?: Date } | undefined;
   if (timestampWhere?.gte && row.timestamp < timestampWhere.gte) return false;
 
-  const statusCodeWhere = where.statusCode as
-    | { gte?: number; lt?: number }
-    | number
-    | undefined;
+  const statusCodeWhere = where.statusCode as { gte?: number; lt?: number } | number | undefined;
   if (typeof statusCodeWhere === 'object' && statusCodeWhere) {
     if (statusCodeWhere.gte !== undefined && row.statusCode < statusCodeWhere.gte) return false;
     if (statusCodeWhere.lt !== undefined && row.statusCode >= statusCodeWhere.lt) return false;
@@ -84,15 +81,15 @@ function matchesWhere(
 
 describe('validateQueryResponsesInput', () => {
   it('rejects unknown metrics', () => {
-    expect(() =>
-      validateQueryResponsesInput({ metric: 'unknown', windowMinutes: 10 }),
-    ).toThrow(/Invalid metric/);
+    expect(() => validateQueryResponsesInput({ metric: 'unknown', windowMinutes: 10 })).toThrow(
+      /Invalid metric/,
+    );
   });
 
   it('rejects out-of-range windowMinutes', () => {
-    expect(() =>
-      validateQueryResponsesInput({ metric: 'count', windowMinutes: 0 }),
-    ).toThrow(/windowMinutes/);
+    expect(() => validateQueryResponsesInput({ metric: 'count', windowMinutes: 0 })).toThrow(
+      /windowMinutes/,
+    );
   });
 });
 

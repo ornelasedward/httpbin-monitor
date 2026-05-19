@@ -82,9 +82,7 @@ export async function* handleChatStream(
       return;
     }
 
-    let pendingTool:
-      | { id: string; name: string; input: unknown }
-      | undefined;
+    let pendingTool: { id: string; name: string; input: unknown } | undefined;
 
     for await (const event of deps.ai.stream({
       system,

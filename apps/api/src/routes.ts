@@ -11,11 +11,7 @@ import { asyncHandler, HttpError } from './error-handler.js';
 import { computeDashboardStats, ONE_HOUR_MS } from './dashboard-stats.js';
 
 export type ResponsesRepository = {
-  findMany: (args: {
-    take: number;
-    cursor?: { id: string };
-    skip?: number;
-  }) => Promise<
+  findMany: (args: { take: number; cursor?: { id: string }; skip?: number }) => Promise<
     Array<{
       id: string;
       timestamp: Date;
@@ -42,11 +38,7 @@ export type StatsRepository = {
 };
 
 export type IncidentsRepository = {
-  findMany: (args: {
-    take: number;
-    cursor?: { id: string };
-    skip?: number;
-  }) => Promise<
+  findMany: (args: { take: number; cursor?: { id: string }; skip?: number }) => Promise<
     Array<{
       id: string;
       responseId: string;
@@ -204,10 +196,7 @@ export function createRoutes(deps?: {
       used: usage.used,
       max: usage.max,
       resetAt: usage.resetAt.toISOString(),
-      estimatedCostUsd: estimateCostUsd(
-        usage.used * 500,
-        usage.used * 300,
-      ),
+      estimatedCostUsd: estimateCostUsd(usage.used * 500, usage.used * 300),
       configured: true,
       pricingNote: `Estimates use Haiku list rates ($${HAIKU_INPUT_USD_PER_M}/M in, $${HAIKU_OUTPUT_USD_PER_M}/M out).`,
     });
@@ -221,7 +210,9 @@ export function createRoutes(deps?: {
 
     const messages = parseChatMessages(req.body?.messages);
     if (!messages) {
-      res.status(400).json({ error: 'Invalid messages: expected a non-empty array of chat messages' });
+      res
+        .status(400)
+        .json({ error: 'Invalid messages: expected a non-empty array of chat messages' });
       return;
     }
 

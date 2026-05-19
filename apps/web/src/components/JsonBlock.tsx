@@ -18,9 +18,7 @@ export function JsonBlock({ title, value }: { title: string; value: unknown }) {
             Copy
           </Button>
         </div>
-        <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs">
-          {text}
-        </pre>
+        <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs">{text}</pre>
       </div>
     </details>
   );

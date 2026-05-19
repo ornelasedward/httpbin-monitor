@@ -17,9 +17,7 @@ export function useResponses() {
   return useInfiniteQuery(responsesInfiniteQueryOptions());
 }
 
-export function flattenPages(
-  data: InfiniteData<ResponsesPage> | undefined,
-): ResponseRecord[] {
+export function flattenPages(data: InfiniteData<ResponsesPage> | undefined): ResponseRecord[] {
   if (!data) return [];
   return data.pages.flatMap((page) => page.items);
 }

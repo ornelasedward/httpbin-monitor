@@ -70,9 +70,7 @@ describe('fetchHealth', () => {
 
 describe('fetchResponses', () => {
   it('requests with limit and cursor query params', async () => {
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({ items: [], nextCursor: null }),
-    );
+    fetchMock.mockResolvedValueOnce(jsonResponse({ items: [], nextCursor: null }));
 
     await fetchResponses({ limit: 25, cursor: 'abc123' });
 

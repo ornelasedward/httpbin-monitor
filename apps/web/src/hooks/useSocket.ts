@@ -1,6 +1,11 @@
 import { useEffect } from 'react';
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
-import { INCIDENT_NEW, PING_NEW, type Incident, type ResponseRecord } from '@httpbin-monitor/shared';
+import {
+  INCIDENT_NEW,
+  PING_NEW,
+  type Incident,
+  type ResponseRecord,
+} from '@httpbin-monitor/shared';
 import { useSocket } from '@/context/SocketProvider';
 import type { IncidentsPage, ResponsesPage } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';

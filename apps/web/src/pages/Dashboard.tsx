@@ -8,14 +8,13 @@ export function Dashboard() {
   const { data: healthy, isLoading: healthLoading, isError: healthError } = useHealth();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
 
-  const healthBadge =
-    healthLoading ? (
-      <Badge variant="secondary">Checking…</Badge>
-    ) : healthError || healthy === false ? (
-      <Badge variant="danger">API: unreachable</Badge>
-    ) : (
-      <Badge variant="success">API: healthy</Badge>
-    );
+  const healthBadge = healthLoading ? (
+    <Badge variant="secondary">Checking…</Badge>
+  ) : healthError || healthy === false ? (
+    <Badge variant="danger">API: unreachable</Badge>
+  ) : (
+    <Badge variant="success">API: healthy</Badge>
+  );
 
   const total = stats?.total ?? 0;
   const avgResponseTime = stats?.avgResponseTime ?? 0;
@@ -39,9 +38,7 @@ export function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="font-display text-2xl font-semibold">
-              {statsLoading ? '…' : total}
-            </p>
+            <p className="font-display text-2xl font-semibold">{statsLoading ? '…' : total}</p>
           </CardContent>
         </Card>
         <Card className="border-t-2 border-t-primary/25">

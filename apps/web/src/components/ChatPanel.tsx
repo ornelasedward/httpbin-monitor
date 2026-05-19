@@ -20,6 +20,7 @@ const SUGGESTED_PROMPTS = [
   "What's the average response time in the last hour?",
   'Any errors today?',
   'Show me the 5 slowest responses',
+  'Summarize payload patterns in the last 24 hours',
 ];
 
 function createMessage(role: 'user' | 'assistant', content: string): ChatMessage {

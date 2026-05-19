@@ -8,7 +8,8 @@ import { IncidentsTable } from './IncidentsTable';
 import type { IncidentsPage } from '@/lib/api';
 
 vi.mock('@/hooks/useIncidents', async () => {
-  const actual = await vi.importActual<typeof import('@/hooks/useIncidents')>('@/hooks/useIncidents');
+  const actual =
+    await vi.importActual<typeof import('@/hooks/useIncidents')>('@/hooks/useIncidents');
   return {
     ...actual,
     useIncidents: vi.fn(),
@@ -72,7 +73,9 @@ function renderWithClient() {
 const mockedUseIncidents = vi.mocked(useIncidents);
 const mockedUseResponse = vi.mocked(useResponse);
 
-function mockUseIncidentsResult(data: InfiniteData<IncidentsPage>): ReturnType<typeof useIncidents> {
+function mockUseIncidentsResult(
+  data: InfiniteData<IncidentsPage>,
+): ReturnType<typeof useIncidents> {
   return {
     data,
     isLoading: false,
@@ -138,6 +141,7 @@ describe('IncidentsTable', () => {
     await user.click(screen.getByRole('button', { name: 'View details' }));
 
     const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText(/httpbin\.org\/anything/)).toBeInTheDocument();
     expect(within(dialog).getByText('Upstream latency')).toBeInTheDocument();
     expect(within(dialog).getByText('Increase timeout')).toBeInTheDocument();
     expect(within(dialog).getByText(/"ping": true/)).toBeInTheDocument();

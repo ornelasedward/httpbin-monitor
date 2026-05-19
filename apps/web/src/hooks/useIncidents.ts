@@ -17,9 +17,7 @@ export function useIncidents() {
   return useInfiniteQuery(incidentsInfiniteQueryOptions());
 }
 
-export function flattenIncidentPages(
-  data: InfiniteData<IncidentsPage> | undefined,
-): Incident[] {
+export function flattenIncidentPages(data: InfiniteData<IncidentsPage> | undefined): Incident[] {
   if (!data) return [];
   return data.pages.flatMap((page) => page.items);
 }

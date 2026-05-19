@@ -1,4 +1,5 @@
 import type { Incident } from '@httpbin-monitor/shared';
+import { MONITORED_ENDPOINT_LABEL } from '@httpbin-monitor/shared';
 import { Badge } from '@/components/ui/badge';
 import { parseIncidentDetails } from '@/lib/incidents';
 import { relativeTime } from '@/lib/relative-time';
@@ -27,12 +28,7 @@ export function IncidentDetailsSection({
   const details = parseIncidentDetails(incident.rootCauses);
 
   return (
-    <div
-      className={cn(
-        'space-y-4',
-        showHeading && 'rounded-md border bg-muted/30 p-4',
-      )}
-    >
+    <div className={cn('space-y-4', showHeading && 'rounded-md border bg-muted/30 p-4')}>
       {showHeading ? (
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Related incident
@@ -42,6 +38,9 @@ export function IncidentDetailsSection({
         <Badge className={cn(severityClass(incident.severity))}>{incident.severity}</Badge>
         <span className="text-xs text-muted-foreground">{relativeTime(incident.createdAt)}</span>
       </div>
+      <p className="text-xs text-muted-foreground">
+        Endpoint: <span className="font-mono text-foreground">{MONITORED_ENDPOINT_LABEL}</span>
+      </p>
       <p className="text-sm font-medium">{incident.summary}</p>
 
       <details className="rounded-md border bg-card" open>

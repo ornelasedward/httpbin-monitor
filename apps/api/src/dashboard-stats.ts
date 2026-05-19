@@ -20,9 +20,7 @@ export function computeDashboardStats(rows: StatsRow[]): DashboardStats {
   const successes = rows.filter((row) => isSuccess(row.statusCode));
   const avgResponseTime =
     successes.length > 0
-      ? Math.round(
-          successes.reduce((sum, row) => sum + row.responseTimeMs, 0) / successes.length,
-        )
+      ? Math.round(successes.reduce((sum, row) => sum + row.responseTimeMs, 0) / successes.length)
       : 0;
   const errorRate = total > 0 ? ((total - successes.length) / total) * 100 : 0;
 

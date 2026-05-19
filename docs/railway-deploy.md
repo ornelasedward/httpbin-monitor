@@ -15,17 +15,17 @@ Everything runs on **Railway only** — no Vercel required. Use **one project**,
 4. **Settings** → **Networking** → **Generate domain** (e.g. `https://api-production-xxxx.up.railway.app`).
 5. **Variables** (service variables):
 
-| Variable | Value |
-|----------|--------|
-| `DATABASE_URL` | Reference → Postgres → `DATABASE_URL` |
-| `ANTHROPIC_API_KEY` | Your Anthropic key |
-| `ANTHROPIC_MODEL` | `claude-haiku-4-5-20251001` (optional) |
-| `PING_INTERVAL_SECONDS` | `300` |
-| `NODE_ENV` | `production` |
-| `FRONTEND_ORIGIN` | Web public URL (step 3) — set after web is deployed |
-| `AI_RATE_LIMIT_PER_HOUR` | `20` |
-| `AI_MAX_INPUT_TOKENS` | `8000` |
-| `AI_CACHE_TTL_SECONDS` | `3600` |
+| Variable                 | Value                                               |
+| ------------------------ | --------------------------------------------------- |
+| `DATABASE_URL`           | Reference → Postgres → `DATABASE_URL`               |
+| `ANTHROPIC_API_KEY`      | Your Anthropic key                                  |
+| `ANTHROPIC_MODEL`        | `claude-haiku-4-5-20251001` (optional)              |
+| `PING_INTERVAL_SECONDS`  | `300`                                               |
+| `NODE_ENV`               | `production`                                        |
+| `FRONTEND_ORIGIN`        | Web public URL (step 3) — set after web is deployed |
+| `AI_RATE_LIMIT_PER_HOUR` | `20`                                                |
+| `AI_MAX_INPUT_TOKENS`    | `8000`                                              |
+| `AI_CACHE_TTL_SECONDS`   | `3600`                                              |
 
 Railway sets `PORT` automatically. Do **not** set a custom Root Directory.
 
@@ -38,11 +38,11 @@ Deploy. Check **Deployments** logs: Prisma migrate should run in the build step.
 3. **Settings** → **Config file path**: `/railway/web.toml`
 4. **Variables** (required **before** the first successful build — Vite bakes these in):
 
-| Variable | Value |
-|----------|--------|
-| `VITE_API_URL` | API public URL from step 2 |
-| `VITE_WS_URL` | Same as `VITE_API_URL` |
-| `VITE_PING_INTERVAL_SECONDS` | `300` |
+| Variable                     | Value                      |
+| ---------------------------- | -------------------------- |
+| `VITE_API_URL`               | API public URL from step 2 |
+| `VITE_WS_URL`                | Same as `VITE_API_URL`     |
+| `VITE_PING_INTERVAL_SECONDS` | `300`                      |
 
 5. **Networking** → **Generate domain** (e.g. `https://web-production-xxxx.up.railway.app`).
 6. Deploy.
@@ -61,33 +61,28 @@ Redeploy the API service if it was already running.
 
 ## 5. Smoke test
 
-| Check | URL / action |
-|-------|----------------|
-| API health | `GET https://<api-domain>/health` → `{ "ok": true }` |
-| Dashboard | Open web domain |
+| Check      | URL / action                                                                                             |
+| ---------- | -------------------------------------------------------------------------------------------------------- |
+| API health | `GET https://<api-domain>/health` → `{ "ok": true }`                                                     |
+| Dashboard  | Open web domain                                                                                          |
 | Live pings | Table grows within ~5 min (`PING_INTERVAL_SECONDS=300`) or temporarily set `10` on API for a faster demo |
-| Socket.IO | New rows appear without refresh |
-| Ask AI | Chat panel streams an answer |
-| Incidents | `/incidents` loads |
+| Socket.IO  | New rows appear without refresh                                                                          |
+| Ask AI     | Chat panel streams an answer                                                                             |
+| Incidents  | `/incidents` loads                                                                                       |
 
-## 6. Update README
+## 6. Update README and submission email
 
-```markdown
-## Live demo
-
-- **Web:** https://web-production-xxxx.up.railway.app
-- **API:** https://api-production-xxxx.up.railway.app
-```
+Fill in the **Live demo** table in `README.md` and the URLs in [`docs/submission-email.md`](./submission-email.md).
 
 ## Troubleshooting
 
-| Symptom | Fix |
-|---------|-----|
-| Web calls wrong API | Rebuild **web** after setting `VITE_*` vars |
-| CORS / Socket errors | `FRONTEND_ORIGIN` must exactly match the web URL |
-| No rows | Check API logs for scheduler; confirm `DATABASE_URL` |
-| Migrations failed at build | Link Postgres to API before first deploy; redeploy |
-| AI disabled | Set `ANTHROPIC_API_KEY` on API service |
+| Symptom                    | Fix                                                  |
+| -------------------------- | ---------------------------------------------------- |
+| Web calls wrong API        | Rebuild **web** after setting `VITE_*` vars          |
+| CORS / Socket errors       | `FRONTEND_ORIGIN` must exactly match the web URL     |
+| No rows                    | Check API logs for scheduler; confirm `DATABASE_URL` |
+| Migrations failed at build | Link Postgres to API before first deploy; redeploy   |
+| AI disabled                | Set `ANTHROPIC_API_KEY` on API service               |
 
 ## Optional: faster demo pings
 

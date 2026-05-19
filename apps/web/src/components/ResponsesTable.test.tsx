@@ -9,7 +9,8 @@ import type { IncidentsPage, ResponsesPage } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
 
 vi.mock('@/hooks/useResponses', async () => {
-  const actual = await vi.importActual<typeof import('@/hooks/useResponses')>('@/hooks/useResponses');
+  const actual =
+    await vi.importActual<typeof import('@/hooks/useResponses')>('@/hooks/useResponses');
   return {
     ...actual,
     useResponses: vi.fn(),
@@ -17,7 +18,8 @@ vi.mock('@/hooks/useResponses', async () => {
 });
 
 vi.mock('@/hooks/useIncidents', async () => {
-  const actual = await vi.importActual<typeof import('@/hooks/useIncidents')>('@/hooks/useIncidents');
+  const actual =
+    await vi.importActual<typeof import('@/hooks/useIncidents')>('@/hooks/useIncidents');
   return {
     ...actual,
     useIncidents: vi.fn(),
@@ -91,7 +93,9 @@ function makeIncidentsInfiniteData(items: Incident[]): InfiniteData<IncidentsPag
 const mockedUseResponses = vi.mocked(useResponses);
 const mockedUseIncidents = vi.mocked(useIncidents);
 
-function mockUseIncidentsResult(data: InfiniteData<IncidentsPage>): ReturnType<typeof useIncidents> {
+function mockUseIncidentsResult(
+  data: InfiniteData<IncidentsPage>,
+): ReturnType<typeof useIncidents> {
   return {
     data,
     isLoading: false,
@@ -126,7 +130,9 @@ describe('ResponsesTable', () => {
   });
 
   it('renders rows from query data with correct columns', () => {
-    mockedUseResponses.mockReturnValue(mockUseResponsesResult(makeInfiniteData([makeRecord({ id: 'row-a' })])));
+    mockedUseResponses.mockReturnValue(
+      mockUseResponsesResult(makeInfiniteData([makeRecord({ id: 'row-a' })])),
+    );
 
     renderWithClient();
 
@@ -183,9 +189,7 @@ describe('ResponsesTable', () => {
 
     renderWithClient();
 
-    expect(
-      screen.getByText(/Waiting for the first ping/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Waiting for the first ping/i)).toBeInTheDocument();
   });
 
   it('opens the sheet with incident details when response is linked', async () => {

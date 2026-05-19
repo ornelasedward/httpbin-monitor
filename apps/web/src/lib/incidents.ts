@@ -18,9 +18,7 @@ export function parseIncidentDetails(rootCauses: unknown): {
   if (typeof rootCauses === 'object' && rootCauses !== null) {
     const value = rootCauses as Record<string, unknown>;
     return {
-      rootCauses: Array.isArray(value.rootCauses)
-        ? value.rootCauses.map(String)
-        : [],
+      rootCauses: Array.isArray(value.rootCauses) ? value.rootCauses.map(String) : [],
       recommendations: Array.isArray(value.recommendations)
         ? value.recommendations.map(String)
         : [],

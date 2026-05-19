@@ -10,11 +10,7 @@ export class HttpError extends Error {
   }
 }
 
-type AsyncRouteHandler = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => Promise<void>;
+type AsyncRouteHandler = (req: Request, res: Response, next: NextFunction) => Promise<void>;
 
 export function asyncHandler(fn: AsyncRouteHandler) {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -22,12 +18,7 @@ export function asyncHandler(fn: AsyncRouteHandler) {
   };
 }
 
-export function errorHandler(
-  err: unknown,
-  _req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export function errorHandler(err: unknown, _req: Request, res: Response, next: NextFunction) {
   void next;
 
   if (res.headersSent) {

@@ -102,10 +102,7 @@ export function createAIClient(apiKey: string, model: string): AIClient {
 
       let inputTokens = 0;
       let outputTokens = 0;
-      const toolBlocks = new Map<
-        number,
-        { id: string; name: string; inputJson: string }
-      >();
+      const toolBlocks = new Map<number, { id: string; name: string; inputJson: string }>();
 
       for await (const event of response) {
         if (event.type === 'message_start' && event.message.usage) {
