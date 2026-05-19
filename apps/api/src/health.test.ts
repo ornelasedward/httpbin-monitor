@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import { errorHandler } from './error-handler.js';
-import { routes } from './routes.js';
+import { createRoutes } from './routes.js';
 
 const app = express();
-app.use(routes);
+app.use(createRoutes());
 app.use(errorHandler);
 
 describe('GET /health', () => {

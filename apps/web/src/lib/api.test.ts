@@ -205,8 +205,8 @@ describe('streamChat', () => {
     fetchMock.mockResolvedValueOnce({ ok: false, status: 503 });
 
     await expect(async () => {
-      for await (const _ of streamChat(messages)) {
-        // drain
+      for await (const event of streamChat(messages)) {
+        void event;
       }
     }).rejects.toThrow('AI features not configured');
   });

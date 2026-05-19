@@ -30,6 +30,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @httpbin-monitor/shared build
+      - run: pnpm --filter api prisma:generate:ci
       - run: pnpm --filter api exec tsc --noEmit
       - run: pnpm --filter web exec tsc --noEmit
 
@@ -60,7 +61,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @httpbin-monitor/shared build
-      - run: pnpm --filter api prisma generate
+      - run: pnpm --filter api prisma:generate:ci
       - run: pnpm test:coverage
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4

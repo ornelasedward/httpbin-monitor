@@ -158,7 +158,8 @@ export function createRoutes(deps?: {
   router.get(
     '/responses/:id',
     asyncHandler(async (req: Request, res: Response) => {
-      const row = await responsesRepo.findById(req.params.id);
+      const id = String(req.params.id);
+      const row = await responsesRepo.findById(id);
       if (!row) {
         throw new HttpError(404, 'Response not found');
       }
@@ -252,5 +253,3 @@ export function createRoutes(deps?: {
 
   return router;
 }
-
-export const routes = createRoutes();
