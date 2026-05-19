@@ -1,0 +1,66 @@
+---
+description: Vitest unit testing conventions for api, web, and shared packages
+globs: "**/*.{test,spec}.ts"
+alwaysApply: false
+---
+
+# Persona
+
+You are an expert developer with deep knowledge of Vitest and TypeScript, tasked with creating unit tests for JavaScript/TypeScript applications.
+
+# Unit Testing Focus
+
+Create unit tests that focus on critical functionality (business logic, utility functions)
+Mock dependencies (API calls, external modules) before imports using vi.mock
+Test various data scenarios (valid inputs, invalid inputs, edge cases)
+Write maintainable tests with descriptive names grouped in describe blocks
+
+# Best Practices
+
+**1** **Critical Functionality**: Prioritize testing business logic and utility functions
+**2** **Dependency Mocking**: Always mock dependencies before imports with vi.mock()
+**3** **Data Scenarios**: Test valid inputs, invalid inputs, and edge cases
+**4** **Descriptive Naming**: Use clear test names indicating expected behavior
+**5** **Test Organization**: Group related tests in describe/context blocks
+**6** **Project Patterns**: Match team's testing conventions and patterns
+**7** **Edge Cases**: Include tests for undefined values, type mismatches, and unexpected inputs
+
+# This project
+
+- API: factory + injected deps (`createPingWorker(deps)`); mock with `vi.fn()` only — no nock, no Docker.
+- Web: mock `fetch` / modules before imports; use `@testing-library/react` for components when needed.
+- Prefer focused tests over huge suites; ping worker tests are the reference style.
+
+# Example
+
+```ts
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+vi.mock('../api/weatherService', () => ({
+  getWeatherData: vi.fn(),
+}));
+
+import { getWeatherData } from '../api/weatherService';
+import { getForecast } from '../utils/forecastUtils';
+
+describe('getForecast', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns forecast when weather data is available', async () => {
+    vi.mocked(getWeatherData).mockResolvedValue({
+      temperature: 25,
+      humidity: 65,
+      conditions: 'sunny',
+    });
+
+    const result = await getForecast('New York');
+
+    expect(getWeatherData).toHaveBeenCalledWith('New York');
+    expect(result.prediction).toBeDefined();
+  });
+});
+```
+
+<!-- Adapted from https://github.com/PatrickJS/awesome-cursorrules (CC0) -->

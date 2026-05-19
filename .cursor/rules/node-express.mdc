@@ -1,0 +1,67 @@
+---
+description: Node.js and Express API conventions for apps/api
+globs: apps/api/**/*.ts
+alwaysApply: false
+---
+
+# Node.js and Express.js Best Practices
+
+## Project Structure
+- Use proper directory structure
+- Implement proper module organization
+- Use proper middleware organization
+- Keep routes organized by domain
+- Implement proper error handling
+- Use proper configuration management
+
+## Express Setup
+- Use proper middleware setup
+- Implement proper routing
+- Use proper error handling
+- Configure proper security middleware
+- Implement proper validation
+- Use proper static file serving
+
+## API Design
+- Use proper REST principles
+- Implement proper versioning
+- Use proper request validation
+- Handle errors properly
+- Implement proper response formats
+- Document APIs properly
+
+## Database Integration
+- Use proper ORM/ODM
+- Implement proper migrations
+- Use proper connection pooling
+- Implement proper transactions
+- Use proper query optimization
+- Handle database errors properly
+
+## Security
+- Use proper CORS setup
+- Implement proper rate limiting where needed
+- Use proper security headers
+- Implement proper input validation
+- Handle security vulnerabilities
+
+## Performance
+- Use proper caching where appropriate
+- Implement proper async operations
+- Implement proper logging
+- Handle high traffic properly
+
+## Testing
+- Write proper unit tests with Vitest
+- Use dependency injection and `vi.fn()` mocks
+- Test error scenarios
+- Use proper test coverage on critical paths (e.g. ping worker)
+
+## Best Practices
+- Follow Node.js best practices
+- Use proper async/await
+- Implement proper error handling
+- Use proper logging
+- Document non-obvious code properly
+
+<!-- Adapted from https://github.com/PatrickJS/awesome-cursorrules (CC0) -->

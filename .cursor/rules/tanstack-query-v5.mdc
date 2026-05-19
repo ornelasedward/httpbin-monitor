@@ -1,0 +1,163 @@
+---
+description: TanStack Query v5 patterns for server state in apps/web
+globs: apps/web/src/{hooks,lib,pages}/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+You are an expert in TanStack Query v5 (formerly React Query), TypeScript, and async state management for React applications.
+
+# TanStack Query v5 Guidelines
+
+## Core Philosophy
+- TanStack Query manages server state — it is NOT a general state manager for client-only state
+- Every query should have a stable, serializable query key that uniquely describes the data
+- Mutations handle writes; queries handle reads — never blur this boundary
+- Prefer `queryOptions()` helper for reusable, co-located query definitions
+- v5 breaking changes: `useQuery` no longer accepts positional args; always use the options object form
+
+## Setup
+```tsx
+// main.tsx
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60, // 1 minute default stale time
+      retry: 2,
+      refetchOnWindowFocus: true,
+    },
+  },
+})
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <YourApp />
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  )
+}
+```
+
+## Query Keys
+- Always structure keys as arrays: `['entity', 'list']`, `['entity', 'detail', id]`
+- Use a query key factory to avoid typos and enable easy invalidation
+```ts
+// queryKeys.ts
+export const postKeys = {
+  all: ['posts'] as const,
+  lists: () => [...postKeys.all, 'list'] as const,
+  list: (filters: PostFilters) => [...postKeys.lists(), filters] as const,
+  details: () => [...postKeys.all, 'detail'] as const,
+  detail: (id: string) => [...postKeys.details(), id] as const,
+}
+```
+
+## queryOptions Helper (v5)
+- Use `queryOptions()` to define queries once and reuse across components
+```ts
+import { queryOptions } from '@tanstack/react-query'
+
+export const postQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey: postKeys.detail(id),
+    queryFn: () => fetchPost(id),
+    staleTime: 1000 * 60 * 5, // 5 min
+  })
+
+const { data } = useQuery(postQueryOptions(postId))
+```
+
+## useQuery
+```tsx
+const {
+  data,
+  isLoading,    // true only on first load with no cached data
+  isFetching,   // true whenever a fetch is in-flight
+  isError,
+  error,
+  isSuccess,
+} = useQuery({
+  queryKey: postKeys.detail(postId),
+  queryFn: () => fetchPost(postId),
+  enabled: !!postId, // disable query if params not ready
+})
+```
+
+## useMutation
+```tsx
+const { mutate, mutateAsync, isPending } = useMutation({
+  mutationFn: (newPost: CreatePostInput) => createPost(newPost),
+  onSuccess: (data) => {
+    queryClient.invalidateQueries({ queryKey: postKeys.lists() })
+    toast.success('Post created!')
+  },
+  onError: (error) => {
+    toast.error(error.message)
+  },
+})
+
+mutate({ title: 'Hello', body: '...' })
+```
+
+## Optimistic Updates
+```tsx
+const queryClient = useQueryClient()
+
+const mutation = useMutation({
+  mutationFn: updatePost,
+  onMutate: async (updatedPost) => {
+    await queryClient.cancelQueries({ queryKey: postKeys.detail(updatedPost.id) })
+    const previous = queryClient.getQueryData(postKeys.detail(updatedPost.id))
+    queryClient.setQueryData(postKeys.detail(updatedPost.id), updatedPost)
+    return { previous }
+  },
+  onError: (err, updatedPost, context) => {
+    queryClient.setQueryData(postKeys.detail(updatedPost.id), context?.previous)
+  },
+  onSettled: (_, __, updatedPost) => {
+    queryClient.invalidateQueries({ queryKey: postKeys.detail(updatedPost.id) })
+  },
+})
+```
+
+## Infinite Queries
+```tsx
+const {
+  data,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+} = useInfiniteQuery({
+  queryKey: postKeys.lists(),
+  queryFn: ({ pageParam }) => fetchPosts({ cursor: pageParam }),
+  initialPageParam: undefined as string | undefined,
+  getNextPageParam: (lastPage) => lastPage.nextCursor,
+})
+
+const allPosts = data?.pages.flatMap((page) => page.items) ?? []
+```
+
+## Live updates (this project)
+- For Socket.IO `ping:new`, prepend into `pages[0].items` with `queryClient.setQueryData` and dedupe by `id` — do not invalidate the whole infinite query on every event.
+
+## Cache Invalidation Patterns
+```ts
+queryClient.invalidateQueries({ queryKey: postKeys.all })
+queryClient.invalidateQueries({ queryKey: postKeys.lists() })
+queryClient.removeQueries({ queryKey: postKeys.detail(id) })
+queryClient.setQueryData(postKeys.detail(id), newData)
+```
+
+## Performance Best Practices
+- Set appropriate `staleTime` per query — defaults to `0` (always stale)
+- Use `select` to transform/subscribe to only relevant slices of data
+- Avoid creating `QueryClient` inside components — instantiate once at app root
+
+## Error Handling
+- Use `throwOnError: true` to bubble errors to the nearest ErrorBoundary
+- Use `retry` function for conditional retry logic (e.g., skip retry on 404)
+
+<!-- Adapted from https://github.com/PatrickJS/awesome-cursorrules (CC0) -->

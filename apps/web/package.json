@@ -1,0 +1,50 @@
+{
+  "name": "web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "preview": "vite preview",
+    "start": "serve dist -s -n -l tcp://0.0.0.0:${PORT:-8080}"
+  },
+  "dependencies": {
+    "@httpbin-monitor/shared": "workspace:*",
+    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@tanstack/react-query": "^5.79.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.511.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.6.1",
+    "remark-gfm": "^4.0.1",
+    "serve": "^14.2.6",
+    "socket.io-client": "^4.8.1",
+    "tailwind-merge": "^3.3.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.5.0",
+    "@vitest/coverage-v8": "^3.2.3",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.28.0",
+    "jsdom": "^26.1.0",
+    "postcss": "^8.5.4",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.3"
+  }
+}

@@ -1,0 +1,23 @@
+---
+description: httpbin-monitor monorepo architecture, patterns, and conventions
+alwaysApply: true
+---
+
+# httpbin-monitor
+
+pnpm workspace: `apps/api` (Express + Prisma + Socket.IO + Anthropic), `apps/web` (React + Vite + TanStack Query + shadcn/ui), `packages/shared` (wire types and event constants).
+
+## Core flows
+
+- **Ping worker** (`apps/api/src/ping-worker.ts`): faker payload → POST httpbin → classify outcome → Prisma persist → broadcast `ping:new`. Factory pattern with injected deps (`createPingWorker(deps)`). DB and broadcast failures are independent.
+- **Web live data**: `useInfiniteQuery` for `GET /responses` (cursor pagination); prepend live rows via `queryClient.setQueryData` on Socket.IO `ping:new` with dedupe by id.
+- **AI**: `POST /ai/chat` (SSE + tool `query_responses`); incident monitor uses forced tool-use `report_incident`. Shared LRU cache + sliding-window LLM limiter (in-memory per instance).
+
+## Conventions
+
+- Strict TypeScript everywhere; shared types from `@httpbin-monitor/shared`.
+- Prefer functional style, named exports, dependency injection in workers/services.
+- Tests: Vitest, `vi.mock` / `vi.fn()` before imports; no Docker/nock for unit tests. Ping worker is the reference tested component.
+- Do not add Nest, Next.js, or TanStack Router — this stack is Express + Vite SPA.
+- Keep API handlers explicit; avoid over-abstracting for take-home scope.
+- Match existing patterns in nearby files before introducing new libraries.

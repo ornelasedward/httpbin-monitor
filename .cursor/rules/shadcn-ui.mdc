@@ -1,0 +1,14 @@
+---
+description: React UI with shadcn/ui and Tailwind in apps/web
+globs: apps/web/src/components/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# shadcn/ui + Tailwind (apps/web)
+
+- Components live under `apps/web/src/components/ui/` (copied from shadcn, not an npm design-system package).
+- Use existing `Button`, `Card`, `Table`, `Badge`, `Sheet`, `Input` primitives before adding new UI dependencies.
+- Style with Tailwind utility classes; follow mobile-first responsive layout.
+- Use `cn()` from `@/lib/utils` for conditional class names.
+- Keep presentational components thin; data fetching belongs in hooks (`useResponses`, `useSocket`, `useIncidents`), not in table/badge primitives.
+- Prefer accessible patterns: semantic HTML, labels on inputs, meaningful button text.
