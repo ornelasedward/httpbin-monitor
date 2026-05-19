@@ -12,7 +12,7 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build --force",
     "lint": "eslint src",
     "test": "vitest run",
     "dev": "tsc --watch"

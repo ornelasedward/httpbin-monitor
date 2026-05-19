@@ -5,6 +5,7 @@ build
 .env.local
 *.log
 coverage
+*.tsbuildinfo
 .DS_Store
 .tmp-awesome-cursorrules
 .pnpm-store

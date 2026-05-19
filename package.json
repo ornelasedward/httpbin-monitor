@@ -12,7 +12,8 @@
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
-    "test:coverage": "pnpm --filter api test:coverage && pnpm --filter web test:coverage",
+    "typecheck": "pnpm --filter @httpbin-monitor/shared build && pnpm --filter api prisma:generate:ci && pnpm --filter api exec tsc --noEmit && pnpm --filter web exec tsc --noEmit",
+    "test:coverage": "pnpm --filter @httpbin-monitor/shared build && pnpm --filter api prisma:generate:ci && pnpm --filter api test:coverage && pnpm --filter web test:coverage",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
