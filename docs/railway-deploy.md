@@ -1,6 +1,14 @@
 # Deploy to Railway (one project, one pass)
 
-Everything runs on **Railway only**. One project, **three resources**: PostgreSQL, `api`, `web`.
+Everything runs on **Railway only**. Connecting GitHub creates an **app** service — it does **not** provision a database. You need **three resources** in one project:
+
+```
+Postgres (plugin)  ←  api (GitHub + railway/api.toml)  ←  web (GitHub + railway/web.toml)
+                         DATABASE_URL reference              VITE_* → api public URL
+                         FRONTEND_ORIGIN → web URL
+```
+
+**README summary:** [Deployment (Railway)](../README.md#deployment-railway) — quick steps and pitfalls; this file is the full checklist.
 
 Config files (no Root Directory on either service — builds run from monorepo root):
 
@@ -26,17 +34,17 @@ Do these in order. You should only need **one API redeploy** if you skip variabl
 4. **Settings** → **Networking** → **Generate domain** (do this **before** the first deploy).
 5. **Variables**:
 
-| Variable                 | Value                                                       |
-| ------------------------ | ----------------------------------------------------------- |
-| `DATABASE_URL`           | **Add reference** → Postgres → `DATABASE_URL`               |
-| `ANTHROPIC_API_KEY`      | Your Anthropic key                                          |
-| `NODE_ENV`               | `production`                                                |
-| `PING_INTERVAL_SECONDS`  | `300` (use `10` temporarily for a faster demo, then revert) |
-| `ANTHROPIC_MODEL`        | `claude-haiku-4-5-20251001` _(optional)_                    |
-| `AI_RATE_LIMIT_PER_HOUR` | `20` _(optional)_                                           |
-| `AI_MAX_INPUT_TOKENS`    | `8000` _(optional)_                                         |
-| `AI_CACHE_TTL_SECONDS`   | `3600` _(optional)_                                         |
-| `FRONTEND_ORIGIN`        | See **6a** or **6b** below                                  |
+| Variable                 | Value                                                                                    |
+| ------------------------ | ---------------------------------------------------------------------------------------- |
+| `DATABASE_URL`           | **Add reference** → Postgres → `DATABASE_URL` (do **not** paste `localhost` from `.env`) |
+| `ANTHROPIC_API_KEY`      | Your Anthropic key                                                                       |
+| `NODE_ENV`               | `production`                                                                             |
+| `PING_INTERVAL_SECONDS`  | `300` (use `10` temporarily for a faster demo, then revert)                              |
+| `ANTHROPIC_MODEL`        | `claude-haiku-4-5-20251001` _(optional)_                                                 |
+| `AI_RATE_LIMIT_PER_HOUR` | `20` _(optional)_                                                                        |
+| `AI_MAX_INPUT_TOKENS`    | `8000` _(optional)_                                                                      |
+| `AI_CACHE_TTL_SECONDS`   | `3600` _(optional)_                                                                      |
+| `FRONTEND_ORIGIN`        | See **6a** or **6b** below                                                               |
 
 Do **not** set `PORT` (Railway sets it). Do **not** set Root Directory.
 
@@ -125,16 +133,17 @@ Fill the **Live demo** table in `README.md` and URLs in [`submission-email.md`](
 
 ## Troubleshooting
 
-| Symptom                           | Fix                                                                |
-| --------------------------------- | ------------------------------------------------------------------ |
-| Build fails / workspace not found | Clear **Root Directory** on both services                          |
-| Web calls wrong API               | Set `VITE_*` then **redeploy web** (rebuild required)              |
-| CORS / Socket errors              | `FRONTEND_ORIGIN` must exactly match web URL                       |
-| No ping rows                      | API logs + confirm `DATABASE_URL` on api                           |
-| Migrations failed                 | Postgres linked to api; `DATABASE_URL` on api; redeploy api        |
-| AI disabled                       | `ANTHROPIC_API_KEY` on api only                                    |
-| `${{api...}}` reference empty     | Service renamed? Names must be `api` and `web`; domain generated   |
-| “No changes to watched files”     | See **Watch paths** below; use **Redeploy** or push a watched file |
+| Symptom                           | Fix                                                                   |
+| --------------------------------- | --------------------------------------------------------------------- |
+| Build fails / workspace not found | Clear **Root Directory** on both services                             |
+| Web calls wrong API               | Set `VITE_*` then **redeploy web** (rebuild required)                 |
+| CORS / Socket errors              | `FRONTEND_ORIGIN` must exactly match web URL                          |
+| No ping rows                      | API logs + confirm `DATABASE_URL` on api                              |
+| Migrations failed                 | Postgres linked to api; `DATABASE_URL` on api; redeploy api           |
+| AI disabled                       | `ANTHROPIC_API_KEY` on api only                                       |
+| AI `ENOENT` … `chat-system.md`    | Pull latest `main` (api build copies prompts to `dist`); redeploy api |
+| `${{api...}}` reference empty     | Service renamed? Names must be `api` and `web`; domain generated      |
+| “No changes to watched files”     | See **Watch paths** below; use **Redeploy** or push a watched file    |
 
 ### Watch paths
 

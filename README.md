@@ -146,21 +146,51 @@ For development, set `PING_INTERVAL_SECONDS=10` in `.env` so pings arrive every 
 
 ## Deployment (Railway)
 
-One Railway project: **Postgres + api + web**. Full one-pass guide: [`docs/railway-deploy.md`](./docs/railway-deploy.md).
+**Step-by-step guide:** [`docs/railway-deploy.md`](./docs/railway-deploy.md) (checklist, variable references, troubleshooting).
 
-| Resource      | Config             | Role                              |
-| ------------- | ------------------ | --------------------------------- |
-| PostgreSQL    | Railway plugin     | Database                          |
-| `api` service | `railway/api.toml` | Express, Socket.IO, scheduler, AI |
-| `web` service | `railway/web.toml` | Vite build + static serve         |
+Connecting GitHub deploys your **app code only** — you must add **PostgreSQL** yourself. One Railway project needs **three resources**:
 
-Do **not** set a Root Directory on either service.
+| #   | Resource      | Config file          | Role                                    |
+| --- | ------------- | -------------------- | --------------------------------------- |
+| 1   | PostgreSQL    | _(Railway database)_ | Database — not created from the repo    |
+| 2   | `api` service | `railway/api.toml`   | Express, scheduler, AI, Socket.IO, REST |
+| 3   | `web` service | `railway/web.toml`   | Vite static build + dashboard UI        |
 
-**API variables:** `DATABASE_URL` (Postgres reference), `ANTHROPIC_API_KEY`, `NODE_ENV=production`, `PING_INTERVAL_SECONDS=300`, `FRONTEND_ORIGIN` (web URL — or `${{web.RAILWAY_PUBLIC_DOMAIN}}` reference; see guide)
+### Quick deploy (first time)
 
-**Web variables** (before first build): `VITE_API_URL`, `VITE_WS_URL` (API URL — or `${{api.RAILWAY_PUBLIC_DOMAIN}}` reference), `VITE_PING_INTERVAL_SECONDS=300`
+1. [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub** → this repo, branch `main`.
+2. **+ New** → **Database** → **PostgreSQL** (wait until it is online).
+3. **+ New** → **GitHub Repo** → same repo → rename service **`api`**.
+   - **Settings** → Config file: `railway/api.toml`
+   - **Networking** → **Generate domain**
+   - **Variables:** `DATABASE_URL` = **reference** Postgres `DATABASE_URL` (never paste `localhost` from `.env`), `NODE_ENV=production`, `ANTHROPIC_API_KEY`, `PING_INTERVAL_SECONDS=300`
+4. **+ New** → **GitHub Repo** → same repo → rename service **`web`**.
+   - **Settings** → Config file: `railway/web.toml`
+   - **Networking** → **Generate domain**
+   - **Variables** _(before first web build):_ `VITE_API_URL` and `VITE_WS_URL` = `https://<your-api-domain>` (same URL, `https://`, no trailing `/`), `VITE_PING_INTERVAL_SECONDS=300`
+5. On **api**, set `FRONTEND_ORIGIN` = `https://<your-web-domain>` (no trailing `/`).
+6. **Deploy** both services (or push to `main`). API runs DB migrations in a **pre-deploy** step (see `railway/api.toml`), not during the image build.
+7. Smoke test: API `/health` → `{ "ok": true }`; open the web URL; dashboard should show pings every **5 minutes** (`300`).
 
-Generate public domains on **api** and **web** before the first deploy.
+**Do not** set **Root Directory** on `api` or `web` (monorepo builds from repo root).
+
+### After changing variables
+
+| Change                         | Redeploy          |
+| ------------------------------ | ----------------- |
+| `VITE_*` on web                | **web** (rebuild) |
+| `FRONTEND_ORIGIN` on api       | **api**           |
+| `DATABASE_URL` / `ANTHROPIC_*` | **api**           |
+
+### Common pitfalls
+
+- **`P1001` / `localhost:5432`** — `DATABASE_URL` on api must **reference** the Postgres service, not your local `.env`.
+- **CORS / “Failed to fetch”** — `FRONTEND_ORIGIN` must match the web URL exactly (no trailing slash); redeploy api.
+- **Dashboard calls wrong host** — set `VITE_API_URL` / `VITE_WS_URL`, then **redeploy web** (Vite bakes them at build time).
+- **AI `ENOENT` prompts** — fixed by copying `src/ai/prompts` into `dist` on api build; redeploy api after pulling latest `main`.
+- **Deploy did not trigger** — use **Deployments → Redeploy**, or see watch-path notes in the deploy guide.
+
+Service names `api` and `web` enable Railway variable references (`${{api.RAILWAY_PUBLIC_DOMAIN}}`, etc.) — details in the full guide.
 
 ## Database schema
 
