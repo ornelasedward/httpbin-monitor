@@ -1,0 +1,27 @@
+# API app — must match the app name in the Fly dashboard (GitHub deploy reads this file).
+app = "httpbin-monitor-lmgtsa"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile.api"
+
+[env]
+  NODE_ENV = "production"
+  PING_INTERVAL_SECONDS = "300"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "60s"
+    interval = "15s"
+    method = "GET"
+    path = "/health"
+    timeout = "5s"
+
+[deploy]
+  release_command = "pnpm --filter api exec prisma migrate deploy"

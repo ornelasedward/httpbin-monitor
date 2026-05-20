@@ -1,0 +1,20 @@
+# Web app — create with: fly apps create httpbin-monitor-web
+# Deploy with: fly deploy --config fly.web.toml
+app = "httpbin-monitor-web"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile.web"
+
+  # Replace with your API public URL before the first web deploy.
+  [build.args]
+    VITE_API_URL = "https://httpbin-monitor-api.fly.dev"
+    VITE_WS_URL = "https://httpbin-monitor-api.fly.dev"
+    VITE_PING_INTERVAL_SECONDS = "300"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1

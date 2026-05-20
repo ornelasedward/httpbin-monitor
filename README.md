@@ -8,12 +8,12 @@ A full-stack monitoring app that POSTs randomized JSON payloads to [httpbin.org/
 
 ## Live demo
 
-> Add your Railway URLs here after deployment (see [Deployment](#deployment-railway)).
+> Add your Fly.io URLs here after deployment (see [Deployment](#deployment-flyio)).
 
 |         | URL                                         |
 | ------- | ------------------------------------------- |
-| **Web** | _pending — Railway web service_             |
-| **API** | _pending — Railway API service_ (`/health`) |
+| **Web** | _pending — Fly web app_                     |
+| **API** | _pending — Fly API app_ (`/health`)         |
 
 **Repository:** https://github.com/ornelasedward/httpbin-monitor (public — reviewers do not need an invite).
 
@@ -110,7 +110,7 @@ Usage: header **AI N/20 · est. $X** and chat footer via `GET /ai/usage`.
 
 - **Single monitored endpoint** — `https://httpbin.org/anything` only; no multi-target config UI.
 - **Anomaly rule** — 2× rolling 1-hour average on **2xx** responses; 5-minute detection window; poll every 60s (not sub-second anomaly detection).
-- **Rate limit** — in-memory per API instance; multiple Railway replicas would each have their own 20/hr cap unless shared state is added.
+- **Rate limit** — in-memory per API instance; multiple API replicas would each have their own 20/hr cap unless shared state is added.
 - **Cost display** — `GET /ai/usage` uses a heuristic (500 in / 300 out tokens per acquired call), not per-request billing from Anthropic.
 - **Chat scope** — monitoring data only; off-topic questions are refused in the system prompt.
 - **Development pings** — `PING_INTERVAL_SECONDS=10` locally for faster feedback; production default **300** (5 minutes) per spec.
@@ -118,7 +118,7 @@ Usage: header **AI N/20 · est. $X** and chat footer via `GET /ai/usage`.
 
 ## Future improvements
 
-- **Redis-backed rate limiter** and cache for multi-instance Railway deployments.
+- **Redis-backed rate limiter** and cache for multi-instance API deployments.
 - **Playwright E2E** for dashboard + chat happy path.
 - **Dedicated payload tagging** (size/complexity) if moving toward Option C-style filters.
 - **Webhook/email** on high-severity incidents.
@@ -148,23 +148,28 @@ Local CORS/Socket.IO accepts **both** ports unless `FRONTEND_ORIGIN` is set to a
 
 For development, set `PING_INTERVAL_SECONDS=10` in `.env` so pings arrive every ten seconds. The default `300` matches the five-minute spec.
 
-## Deployment (Railway)
+## Deployment (Fly.io)
 
-Deploy Postgres + API + Web in one Railway project. Config: [`railway/api.toml`](./railway/api.toml), [`railway/web.toml`](./railway/web.toml). Step-by-step: [`docs/railway-deploy.md`](./docs/railway-deploy.md).
+Deploy Postgres + API + Web on Fly.io. Dockerfiles: [`Dockerfile.api`](./Dockerfile.api), [`Dockerfile.web`](./Dockerfile.web). Config: [`fly.toml`](./fly.toml) (API), [`fly.web.toml`](./fly.web.toml) (web). Step-by-step: [`docs/fly-deploy.md`](./docs/fly-deploy.md).
 
-| Resource      | Config             | Role                              |
-| ------------- | ------------------ | --------------------------------- |
-| PostgreSQL    | (Railway plugin)   | Database                          |
-| `api` service | `railway/api.toml` | Express, Socket.IO, scheduler, AI |
-| `web` service | `railway/web.toml` | Vite build + static serve         |
+| Resource   | Config / image     | Role                              |
+| ---------- | ------------------ | --------------------------------- |
+| Postgres   | `fly postgres create` | Database (`DATABASE_URL` on API) |
+| API app    | `fly.toml` + `Dockerfile.api` | Express, Socket.IO, scheduler, AI |
+| Web app    | `fly.web.toml` + `Dockerfile.web` | Vite build + static serve    |
 
-Do **not** set a Root Directory on either service — builds run from the monorepo root so pnpm workspaces resolve.
+**API secrets:** `DATABASE_URL` (from `fly postgres attach`), `ANTHROPIC_API_KEY`, `FRONTEND_ORIGIN` (web URL), optional `PING_INTERVAL_SECONDS=300`
 
-**API variables:** `DATABASE_URL` (Postgres reference), `ANTHROPIC_API_KEY`, `FRONTEND_ORIGIN` (web URL), `PING_INTERVAL_SECONDS=300`, `NODE_ENV=production`
-
-**Web variables** (set before build): `VITE_API_URL`, `VITE_WS_URL` (same as API URL), `VITE_PING_INTERVAL_SECONDS=300`
+**Web build args** (in `fly.web.toml`, before first deploy): `VITE_API_URL`, `VITE_WS_URL` (same as API URL), `VITE_PING_INTERVAL_SECONDS=300`
 
 After deploy, update the [Live demo](#live-demo) table in this README.
+
+<details>
+<summary>Railway (alternative)</summary>
+
+Config: [`railway/api.toml`](./railway/api.toml), [`railway/web.toml`](./railway/web.toml). Guide: [`docs/railway-deploy.md`](./docs/railway-deploy.md).
+
+</details>
 
 ## Database schema
 

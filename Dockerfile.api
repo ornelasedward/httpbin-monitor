@@ -1,0 +1,26 @@
+# API: Express + Socket.IO + Prisma (monorepo root context)
+FROM node:22-alpine
+
+RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY apps/api/package.json apps/api/
+COPY packages/shared/package.json packages/shared/
+
+RUN pnpm install --frozen-lockfile
+
+COPY packages/shared packages/shared
+COPY apps/api apps/api
+
+RUN pnpm --filter @httpbin-monitor/shared build \
+  && pnpm --filter api exec prisma generate \
+  && pnpm --filter api build
+
+ENV NODE_ENV=production
+ENV PORT=8080
+
+EXPOSE 8080
+
+CMD ["pnpm", "--filter", "api", "start"]
