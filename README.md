@@ -8,12 +8,12 @@ A full-stack monitoring app that POSTs randomized JSON payloads to [httpbin.org/
 
 ## Live demo
 
-> Add your Fly.io URLs here after deployment (see [Deployment](#deployment-flyio)).
+> Add your Railway URLs here after deployment (see [Deployment](#deployment-railway)).
 
-|         | URL                                 |
-| ------- | ----------------------------------- |
-| **Web** | _pending — Fly web app_             |
-| **API** | _pending — Fly API app_ (`/health`) |
+|         | URL                                         |
+| ------- | ------------------------------------------- |
+| **Web** | _pending — Railway web service_             |
+| **API** | _pending — Railway API service_ (`/health`) |
 
 **Repository:** https://github.com/ornelasedward/httpbin-monitor (public — reviewers do not need an invite).
 
@@ -148,26 +148,28 @@ Local CORS/Socket.IO accepts **both** ports unless `FRONTEND_ORIGIN` is set to a
 
 For development, set `PING_INTERVAL_SECONDS=10` in `.env` so pings arrive every ten seconds. The default `300` matches the five-minute spec.
 
-## Deployment (Fly.io)
+## Deployment (Railway)
 
-Deploy Postgres + API + Web on Fly.io. Dockerfiles: [`Dockerfile.api`](./Dockerfile.api), [`Dockerfile.web`](./Dockerfile.web). Config: [`fly.toml`](./fly.toml) (API), [`fly.web.toml`](./fly.web.toml) (web). Step-by-step: [`docs/fly-deploy.md`](./docs/fly-deploy.md).
+One Railway project: **Postgres + api + web**. Full one-pass guide: [`docs/railway-deploy.md`](./docs/railway-deploy.md).
 
-| Resource | Config / image                    | Role                              |
-| -------- | --------------------------------- | --------------------------------- |
-| Postgres | `fly postgres create`             | Database (`DATABASE_URL` on API)  |
-| API app  | `fly.toml` + `Dockerfile.api`     | Express, Socket.IO, scheduler, AI |
-| Web app  | `fly.web.toml` + `Dockerfile.web` | Vite build + static serve         |
+| Resource      | Config             | Role                              |
+| ------------- | ------------------ | --------------------------------- |
+| PostgreSQL    | Railway plugin     | Database                          |
+| `api` service | `railway/api.toml` | Express, Socket.IO, scheduler, AI |
+| `web` service | `railway/web.toml` | Vite build + static serve         |
 
-**API secrets:** `DATABASE_URL` (from `fly postgres attach`), `ANTHROPIC_API_KEY`, `FRONTEND_ORIGIN` (web URL), optional `PING_INTERVAL_SECONDS=300`
+Do **not** set a Root Directory on either service.
 
-**Web build args** (in `fly.web.toml`, before first deploy): `VITE_API_URL`, `VITE_WS_URL` (same as API URL), `VITE_PING_INTERVAL_SECONDS=300`
+**API variables:** `DATABASE_URL` (Postgres reference), `ANTHROPIC_API_KEY`, `NODE_ENV=production`, `PING_INTERVAL_SECONDS=300`, `FRONTEND_ORIGIN` (web URL — or `${{web.RAILWAY_PUBLIC_DOMAIN}}` reference; see guide)
 
-After deploy, update the [Live demo](#live-demo) table in this README.
+**Web variables** (before first build): `VITE_API_URL`, `VITE_WS_URL` (API URL — or `${{api.RAILWAY_PUBLIC_DOMAIN}}` reference), `VITE_PING_INTERVAL_SECONDS=300`
+
+Generate public domains on **api** and **web** before the first deploy. After deploy, update the [Live demo](#live-demo) table.
 
 <details>
-<summary>Railway (alternative)</summary>
+<summary>Fly.io (alternative)</summary>
 
-Config: [`railway/api.toml`](./railway/api.toml), [`railway/web.toml`](./railway/web.toml). Guide: [`docs/railway-deploy.md`](./docs/railway-deploy.md).
+[`docs/fly-deploy.md`](./docs/fly-deploy.md) — requires separate Postgres (~$38/mo managed) and two Fly apps.
 
 </details>
 

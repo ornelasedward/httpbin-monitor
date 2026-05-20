@@ -1,6 +1,6 @@
 # API app — must match the app name in the Fly dashboard (GitHub deploy reads this file).
-app = "httpbin-monitor-lmgtsa"
-primary_region = "iad"
+app = "httpbin-monitor-cwws0q"
+primary_region = "ams"
 
 [build]
   dockerfile = "Dockerfile.api"
