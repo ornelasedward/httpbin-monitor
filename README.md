@@ -166,13 +166,6 @@ Do **not** set a Root Directory on either service.
 
 Generate public domains on **api** and **web** before the first deploy. After deploy, update the [Live demo](#live-demo) table.
 
-<details>
-<summary>Fly.io (alternative)</summary>
-
-[`docs/fly-deploy.md`](./docs/fly-deploy.md) — requires separate Postgres (~$38/mo managed) and two Fly apps.
-
-</details>
-
 ## Database schema
 
 ```prisma

@@ -88,7 +88,7 @@ No trailing slashes. Domains must be generated (step 2.4 / 3.4) before deploy.
 
 Trigger deploy on **api** and **web** (Railway may auto-deploy on save).
 
-**API build** runs migrations in `railway/api.toml` (`prisma migrate deploy`). Check api **Deployments** logs for success.
+**API pre-deploy** runs migrations in `railway/api.toml` (`prisma migrate deploy`) after the image is built, when `DATABASE_URL` is reachable. Check api **Deployments** logs for success.
 
 ### 7. Smoke test
 
@@ -131,7 +131,7 @@ Fill the **Live demo** table in `README.md` and URLs in [`submission-email.md`](
 | Web calls wrong API               | Set `VITE_*` then **redeploy web** (rebuild required)            |
 | CORS / Socket errors              | `FRONTEND_ORIGIN` must exactly match web URL                     |
 | No ping rows                      | API logs + confirm `DATABASE_URL` on api                         |
-| Migrations failed                 | Postgres linked to api before first deploy; redeploy api         |
+| Migrations failed                 | Postgres linked to api; `DATABASE_URL` on api; redeploy api     |
 | AI disabled                       | `ANTHROPIC_API_KEY` on api only                                  |
 | `${{api...}}` reference empty     | Service renamed? Names must be `api` and `web`; domain generated |
 

@@ -4,10 +4,11 @@
 
 [build]
 builder = "NIXPACKS"
-buildCommand = "pnpm install --frozen-lockfile && pnpm --filter @httpbin-monitor/shared build && pnpm --filter api exec prisma generate && pnpm --filter api exec prisma migrate deploy && pnpm --filter api build"
+buildCommand = "pnpm install --frozen-lockfile && pnpm --filter @httpbin-monitor/shared build && pnpm --filter api exec prisma generate && pnpm --filter api build"
 watchPatterns = ["apps/api/**", "packages/shared/**", "pnpm-lock.yaml"]
 
 [deploy]
+preDeployCommand = ["pnpm --filter api exec prisma migrate deploy"]
 startCommand = "pnpm --filter api start"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
