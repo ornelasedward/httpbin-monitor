@@ -21,6 +21,12 @@ describe('resolveFrontendOrigins', () => {
     expect(resolveFrontendOrigins()).toEqual(['http://localhost:5173', 'http://localhost:5174']);
   });
 
+  it('strips trailing slashes from configured origins', () => {
+    process.env.FRONTEND_ORIGIN = 'https://web-production-9ea3e.up.railway.app/';
+
+    expect(resolveFrontendOrigins()).toEqual(['https://web-production-9ea3e.up.railway.app']);
+  });
+
   it('returns empty list in production when unset', () => {
     delete process.env.FRONTEND_ORIGIN;
     process.env.NODE_ENV = 'production';
