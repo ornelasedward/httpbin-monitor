@@ -14,8 +14,8 @@ Please find my take-home submission:
 
 **Live demo**
 
-- Web: _[add Railway web URL]_
-- API health: _[add Railway API URL]_/health
+- Web: https://web-production-9ea3e.up.railway.app/
+- API health: https://httpbin-monitor-cwws0q-production.up.railway.app/health
 
 **Enhancement:** Option B — LLM-Powered Insights (natural-language chat, automatic incident reports, cost controls). Details in the README and [`docs/ai-cost.md`](./ai-cost.md).
 
@@ -31,7 +31,7 @@ Please find my take-home submission:
 
 **Local setup:** See README — `docker compose up -d`, `pnpm install`, migrate, `pnpm dev`.
 
-**Tests / CI:** `pnpm test` (82 tests); GitHub Actions runs lint, Prettier, typecheck, and coverage on push/PR to `main`.
+**Tests / CI:** `pnpm test` (87 tests); GitHub Actions runs lint, Prettier, typecheck, and coverage on push/PR to `main`.
 
 Happy to walk through architecture or trade-offs on a call.
 

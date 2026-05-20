@@ -8,16 +8,12 @@ A full-stack monitoring app that POSTs randomized JSON payloads to [httpbin.org/
 
 ## Live demo
 
-> Add your Railway URLs here after deployment (see [Deployment](#deployment-railway)).
-
-|         | URL                                         |
-| ------- | ------------------------------------------- |
-| **Web** | _pending — Railway web service_             |
-| **API** | _pending — Railway API service_ (`/health`) |
+|         | URL                                                             |
+| ------- | --------------------------------------------------------------- |
+| **Web** | https://web-production-9ea3e.up.railway.app/                    |
+| **API** | https://httpbin-monitor-cwws0q-production.up.railway.app/health |
 
 **Repository:** https://github.com/ornelasedward/httpbin-monitor (public — reviewers do not need an invite).
-
-Submission email template: [`docs/submission-email.md`](./docs/submission-email.md).
 
 ## Architecture
 
@@ -164,7 +160,7 @@ Do **not** set a Root Directory on either service.
 
 **Web variables** (before first build): `VITE_API_URL`, `VITE_WS_URL` (API URL — or `${{api.RAILWAY_PUBLIC_DOMAIN}}` reference), `VITE_PING_INTERVAL_SECONDS=300`
 
-Generate public domains on **api** and **web** before the first deploy. After deploy, update the [Live demo](#live-demo) table.
+Generate public domains on **api** and **web** before the first deploy.
 
 ## Database schema
 
