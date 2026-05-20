@@ -5,7 +5,14 @@
 [build]
 builder = "NIXPACKS"
 buildCommand = "pnpm install --frozen-lockfile && pnpm --filter @httpbin-monitor/shared build && pnpm --filter api exec prisma generate && pnpm --filter api build"
-watchPatterns = ["apps/api/**", "packages/shared/**", "pnpm-lock.yaml", "railway/api.toml", "package.json"]
+# Leading `/` matches Railway docs. If auto-deploy still skips, add the same lines in the dashboard Watch Paths UI (Railpack may ignore config-file watch paths).
+watchPatterns = [
+  "/apps/api/**",
+  "/packages/shared/**",
+  "/pnpm-lock.yaml",
+  "/railway/api.toml",
+  "/package.json",
+]
 
 [deploy]
 preDeployCommand = ["pnpm --filter api exec prisma migrate deploy"]

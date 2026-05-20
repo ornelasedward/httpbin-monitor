@@ -125,15 +125,38 @@ Fill the **Live demo** table in `README.md` and URLs in [`submission-email.md`](
 
 ## Troubleshooting
 
-| Symptom                           | Fix                                                              |
-| --------------------------------- | ---------------------------------------------------------------- |
-| Build fails / workspace not found | Clear **Root Directory** on both services                        |
-| Web calls wrong API               | Set `VITE_*` then **redeploy web** (rebuild required)            |
-| CORS / Socket errors              | `FRONTEND_ORIGIN` must exactly match web URL                     |
-| No ping rows                      | API logs + confirm `DATABASE_URL` on api                         |
-| Migrations failed                 | Postgres linked to api; `DATABASE_URL` on api; redeploy api      |
-| AI disabled                       | `ANTHROPIC_API_KEY` on api only                                  |
-| `${{api...}}` reference empty     | Service renamed? Names must be `api` and `web`; domain generated |
+| Symptom                           | Fix                                                                |
+| --------------------------------- | ------------------------------------------------------------------ |
+| Build fails / workspace not found | Clear **Root Directory** on both services                          |
+| Web calls wrong API               | Set `VITE_*` then **redeploy web** (rebuild required)              |
+| CORS / Socket errors              | `FRONTEND_ORIGIN` must exactly match web URL                       |
+| No ping rows                      | API logs + confirm `DATABASE_URL` on api                           |
+| Migrations failed                 | Postgres linked to api; `DATABASE_URL` on api; redeploy api        |
+| AI disabled                       | `ANTHROPIC_API_KEY` on api only                                    |
+| `${{api...}}` reference empty     | Service renamed? Names must be `api` and `web`; domain generated   |
+| “No changes to watched files”     | See **Watch paths** below; use **Redeploy** or push a watched file |
+
+### Watch paths
+
+Watch paths limit which file changes trigger a deploy. **Docs-only pushes** (e.g. `docs/**`) do **not** deploy the API.
+
+**API service** — add these in **Settings → Build → Watch Paths** (one per line), or rely on `railway/api.toml` if your builder honors config-as-code:
+
+```gitignore
+/apps/api/**
+/packages/shared/**
+/pnpm-lock.yaml
+/railway/api.toml
+/package.json
+```
+
+**Web service** — same idea with `/apps/web/**` and `/railway/web.toml` in `railway/web.toml`.
+
+If the dashboard **Watch Paths** list is empty but deploys are still skipped, Railpack may be ignoring `watchPatterns` in the config file — **paste the patterns into the UI**. To deploy on every push (simplest while you only have one service), leave **Watch Paths** empty in the dashboard and remove `watchPatterns` from the config file.
+
+**Wait for CI** enabled? A failed GitHub Actions run blocks deploy even when files match.
+
+**Right now:** use **Deployments → Redeploy** once; do not wait for a docs-only commit to trigger a build.
 
 ---
 

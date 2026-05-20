@@ -7,7 +7,13 @@
 [build]
 builder = "NIXPACKS"
 buildCommand = "pnpm install --frozen-lockfile && pnpm --filter @httpbin-monitor/shared build && pnpm --filter web build"
-watchPatterns = ["apps/web/**", "packages/shared/**", "pnpm-lock.yaml", "railway/web.toml", "package.json"]
+watchPatterns = [
+  "/apps/web/**",
+  "/packages/shared/**",
+  "/pnpm-lock.yaml",
+  "/railway/web.toml",
+  "/package.json",
+]
 
 [deploy]
 startCommand = "pnpm --filter web start"
