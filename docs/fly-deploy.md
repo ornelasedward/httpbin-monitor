@@ -118,13 +118,13 @@ The web app is a **second** Fly app — create it in the dashboard or CLI and po
 
 ## Troubleshooting
 
-| Symptom                         | Fix                                                                 |
-| ------------------------------- | ------------------------------------------------------------------- |
+| Symptom                         | Fix                                                                     |
+| ------------------------------- | ----------------------------------------------------------------------- |
 | Could not detect runtime        | Push `Dockerfile.api` + `fly.toml` with `dockerfile = "Dockerfile.api"` |
-| Web calls wrong API             | Update `[build.args]` in `fly.web.toml` and redeploy web            |
-| CORS / Socket errors            | `FRONTEND_ORIGIN` must exactly match the web URL (no trailing slash) |
-| Migrations failed               | Confirm Postgres attached; `fly logs --app <api>` during deploy     |
-| `release_command` fails locally | Normal if no `DATABASE_URL`; it runs on Fly with attached Postgres  |
+| Web calls wrong API             | Update `[build.args]` in `fly.web.toml` and redeploy web                |
+| CORS / Socket errors            | `FRONTEND_ORIGIN` must exactly match the web URL (no trailing slash)    |
+| Migrations failed               | Confirm Postgres attached; `fly logs --app <api>` during deploy         |
+| `release_command` fails locally | Normal if no `DATABASE_URL`; it runs on Fly with attached Postgres      |
 
 ## Optional: faster demo pings
 

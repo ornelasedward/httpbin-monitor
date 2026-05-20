@@ -10,10 +10,10 @@ A full-stack monitoring app that POSTs randomized JSON payloads to [httpbin.org/
 
 > Add your Fly.io URLs here after deployment (see [Deployment](#deployment-flyio)).
 
-|         | URL                                         |
-| ------- | ------------------------------------------- |
-| **Web** | _pending — Fly web app_                     |
-| **API** | _pending — Fly API app_ (`/health`)         |
+|         | URL                                 |
+| ------- | ----------------------------------- |
+| **Web** | _pending — Fly web app_             |
+| **API** | _pending — Fly API app_ (`/health`) |
 
 **Repository:** https://github.com/ornelasedward/httpbin-monitor (public — reviewers do not need an invite).
 
@@ -152,11 +152,11 @@ For development, set `PING_INTERVAL_SECONDS=10` in `.env` so pings arrive every 
 
 Deploy Postgres + API + Web on Fly.io. Dockerfiles: [`Dockerfile.api`](./Dockerfile.api), [`Dockerfile.web`](./Dockerfile.web). Config: [`fly.toml`](./fly.toml) (API), [`fly.web.toml`](./fly.web.toml) (web). Step-by-step: [`docs/fly-deploy.md`](./docs/fly-deploy.md).
 
-| Resource   | Config / image     | Role                              |
-| ---------- | ------------------ | --------------------------------- |
-| Postgres   | `fly postgres create` | Database (`DATABASE_URL` on API) |
-| API app    | `fly.toml` + `Dockerfile.api` | Express, Socket.IO, scheduler, AI |
-| Web app    | `fly.web.toml` + `Dockerfile.web` | Vite build + static serve    |
+| Resource | Config / image                    | Role                              |
+| -------- | --------------------------------- | --------------------------------- |
+| Postgres | `fly postgres create`             | Database (`DATABASE_URL` on API)  |
+| API app  | `fly.toml` + `Dockerfile.api`     | Express, Socket.IO, scheduler, AI |
+| Web app  | `fly.web.toml` + `Dockerfile.web` | Vite build + static serve         |
 
 **API secrets:** `DATABASE_URL` (from `fly postgres attach`), `ANTHROPIC_API_KEY`, `FRONTEND_ORIGIN` (web URL), optional `PING_INTERVAL_SECONDS=300`
 
