@@ -2,7 +2,7 @@
 
 A full-stack monitoring app that POSTs randomized JSON payloads to [httpbin.org/anything](https://httpbin.org/anything) on a schedule, persists every result to PostgreSQL, and streams new rows to a live dashboard over Socket.IO.
 
-**Take-home enhancement: Option B — LLM-Powered Insights** — natural-language chat over monitoring data, automatic incident reports when latency exceeds **2×** the rolling average, payload-aware analysis via the chat tool, and explicit cost controls (cache, rate limit, token budget). Detailed cost write-up: [`docs/ai-cost.md`](./docs/ai-cost.md).
+**Take-home enhancement: Option B — LLM-Powered Insights** — natural-language chat over monitoring data, automatic incident reports when latency exceeds **2×** the rolling average, payload-aware analysis via the chat tool, and explicit cost controls (cache, rate limit, token budget). Detailed cost write-up: [`docs/ai-cost.md`](./docs/ai-cost.md)..
 
 ![Dashboard — live table, stats, and API health](./docs/screenshots/dashboard.png)
 
